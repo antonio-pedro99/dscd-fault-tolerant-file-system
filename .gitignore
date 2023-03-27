@@ -3,3 +3,4 @@
 /primary_backup_blocking/__pycache__/
 /primary_backup_blocking/__pycache__
 *.pdf
+__pycache__

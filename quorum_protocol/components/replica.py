@@ -17,7 +17,7 @@ class Replica(servicer.ReplicaServicer):
         # self.article_list=[]
         # self.client_lock=Lock()
         # self.article_lock=Lock()
-        self.registry_channel=grpc.insecure_channel('localhost:5001')
+        self.registry_channel=grpc.insecure_channel('localhost:50001')
         pass
 
     def start(self):
@@ -41,10 +41,19 @@ class Replica(servicer.ReplicaServicer):
             message.ServerMessage(uuid=self.uuid,address=self.address)
         )
         print('REPLICA REGISTERED WITH ADDRESS: ',self.address)
+        print(self.get_replicas('READ'))
         self.server.start()
         self.server.wait_for_termination()
 
+    def get_replicas(self, type):
+        get_server_lst_stub = servicer.RegistryServerStub(self.registry_channel)
+        response = get_server_lst_stub.GetReplicas(
+            message.RequestType(type=type)
+        )
+        return list([msg.address for msg in response.serverList])
+
     def Read(self, request, context):
+        print(self.get_replicas("READ"))
         pass
 
     def Write(self, request, context):

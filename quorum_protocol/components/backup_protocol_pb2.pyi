@@ -1,4 +1,3 @@
-from google.protobuf import empty_pb2 as _empty_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -40,6 +39,12 @@ class ReadResponse(_message.Message):
     status: Status
     version: str
     def __init__(self, status: _Optional[_Union[Status, str]] = ..., name: _Optional[str] = ..., content: _Optional[str] = ..., version: _Optional[str] = ...) -> None: ...
+
+class RequestType(_message.Message):
+    __slots__ = ["type"]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    type: str
+    def __init__(self, type: _Optional[str] = ...) -> None: ...
 
 class Response(_message.Message):
     __slots__ = ["response"]
