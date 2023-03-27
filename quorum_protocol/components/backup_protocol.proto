@@ -5,7 +5,6 @@ service Replica{
     rpc Read(ReadDeleteRequest) returns (ReadResponse);
     rpc Write(WriteRequest) returns (WriteResponse);
     rpc Delete(ReadDeleteRequest) returns (Response);
-    rpc HandleWrite(WriteRequest) returns (WriteResponse);
 }
 
 service RegistryServer{

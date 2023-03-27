@@ -5,6 +5,7 @@ from port import get_new_port
 import uuid
 from concurrent import futures
 from threading import Lock
+import os
 
 class Replica(servicer.ReplicaServicer):
 
@@ -16,7 +17,7 @@ class Replica(servicer.ReplicaServicer):
         # self.CLIENTELE=[]
         # self.article_list=[]
         # self.client_lock=Lock()
-        # self.article_lock=Lock()
+        self.article_lock=Lock()
         self.registry_channel=grpc.insecure_channel('localhost:50001')
         pass
 
@@ -25,9 +26,19 @@ class Replica(servicer.ReplicaServicer):
             print('-----STARTING REPLICA------')
             self.SetupReplica()
             self.RegisterReplica()
+            self.CreateDirectory()
         except KeyboardInterrupt:
             print('-----CLOSING REPLICA------')
             return
+
+    def CreateDirectory(self):
+        try:
+            os.mkdir(self.uuid)
+        except OSError as error: 
+            print(error)
+
+    def DeleteDirectory(self):
+        pass
 
     def SetupReplica(self):
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=self.MAXCLIENTS))
@@ -45,25 +56,18 @@ class Replica(servicer.ReplicaServicer):
         self.server.start()
         self.server.wait_for_termination()
 
-    def get_replicas(self, type):
-        get_server_lst_stub = servicer.RegistryServerStub(self.registry_channel)
-        response = get_server_lst_stub.GetReplicas(
-            message.RequestType(type=type)
-        )
-        return list([msg.address for msg in response.serverList])
 
     def Read(self, request, context):
-        print(self.get_replicas("READ"))
         pass
 
     def Write(self, request, context):
+        # handling the write request received from client
+
         pass
 
     def Delete(self, request, context):
         pass
 
-    def HandleWrite(self, request, context):
-        pass
 
 
 def main():

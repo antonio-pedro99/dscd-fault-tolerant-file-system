@@ -9,11 +9,11 @@ class ReplicaRegistryService:
     def __init__(self) -> None:
         super().__init__()
         self.current_registered=0
-        self.replica_list={}
+        self.replica_list=[]
         self.replica_list_lock=Lock()
-        self.primary_replica_address = None
-        self.primary_replica_uuid = None
-    
+        self.primary_replica=None # we will be saving object of ServerMessage-> it will contain both uuid and address
+        
+
     def start(self):
         try:
             print("STARTING REGISTRY")
@@ -29,12 +29,17 @@ class ReplicaRegistryService:
 
     def register_replica(self, request, context):
         self.replica_list_lock.acquire()
-        print(f"JOIN REQUEST FROM {request.address} [ADDRESS]")
-    
-        self.replica_list[request.name]=message.replicaMessage(name=request.name,address=request.address)
-        self.current_registered+=1
-        self.replica_list_lock.release()
-        return message.Result()
+        print(f"JOIN REQUEST FROM REPLICA {request.address} [ADDRESS]")        
+        replica=message.ServerMessage(uuid=request.uuid, address=request.address)
+        self.replica_list.append(replica)
+        # first replica
+        if(len(self.replica_list.keys())==0):
+            self.primary_replica=replica
+            return message.ServerMessage(uuid=None, address=None)
+        # not first
+        else:
+            return self.primary_replica
+
     
     def get_replica_list(self, request, context):
         self.replica_list_lock.acquire()
