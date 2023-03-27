@@ -1,3 +1,5 @@
 /env
 /script
 /primary_backup_blocking/__pycache__/
+/primary_backup_blocking/__pycache__
+*.pdf
