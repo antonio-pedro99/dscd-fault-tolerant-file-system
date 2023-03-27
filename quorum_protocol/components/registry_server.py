@@ -3,6 +3,7 @@ import backup_protocol_pb2 as message
 import backup_protocol_pb2_grpc as servicer
 from concurrent import futures
 from threading import Lock
+import random
 
 class RegistryServerService(servicer.RegistryServerServicer):
 
@@ -21,7 +22,7 @@ class RegistryServerService(servicer.RegistryServerServicer):
             registry_server = grpc.server(futures.ThreadPoolExecutor(max_workers=self.num_replica))
             servicer.add_RegistryServerServicer_to_server(RegistryServerService(),registry_server)
             print("REGISTRY STARTED")
-            registry_server.add_insecure_port('localhost:5001')
+            registry_server.add_insecure_port('localhost:50001')
             registry_server.start()
             registry_server.wait_for_termination()
         except KeyboardInterrupt:
@@ -31,29 +32,29 @@ class RegistryServerService(servicer.RegistryServerServicer):
 
     def RegisterReplica(self, request, context):
         self.replica_list_lock.acquire()
-        print(f"JOIN REQUEST FROM {request.address} [ADDRESS]")
+        print(f"JOIN REQUEST FROM REPLICA {request.address} [ADDRESS]")
         self.replica_list[request.uuid]=message.ServerMessage(uuid=request.uuid,address=request.address)
         self.current_registered+=1
         self.replica_list_lock.release()
         return message.ServerMessage(uuid=None,address=None)
 
-    def NotifyPrimary(self, request, context):
-        pass
-
     def GetReplicas(self, request, context):
-        pass
+        self.replica_list_lock.acquire()
+        request_type=str(request.type)
+        num_replica_to_send=0
+        if(request_type=="READ"):
+            num_replica_to_send=self.N_r
+        elif(request_type=="WRITE" or request_type=="DELETE"):
+            num_replica_to_send=self.N_w
+        else: # none of the 
+            num_replica_to_send=self.num_replica
+        uids_to_send=list(random.sample(self.replica_list.keys(),num_replica_to_send))
+        replicas_to_send=message.ServerListResponse()
+        for key in uids_to_send:
+            replicas_to_send.serverList.append(self.replica_list[key])
+        self.replica_list_lock.release()
+        return replicas_to_send
     
-
-    def RegisterServer(self, request, context):
-        self.server_list_lock.acquire()
-        print(f"JOIN REQUEST FROM {request.address} [ADDRESS]")
-        status='FAIL'
-        if(self.current_registered<self.MAXSERVERS):
-            status='SUCCESS'
-            self.server_list[request.name]=message.ServerMessage(name=request.name,address=request.address)
-            self.current_registered+=1
-        self.server_list_lock.release()
-        return message.Result(status=status)
     
     def GetServerList(self, request, context):
         self.server_list_lock.acquire()
