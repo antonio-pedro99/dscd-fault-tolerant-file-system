@@ -33,12 +33,15 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
         replica=message.ServerMessage(uuid=request.uuid, address=request.address)
         self.replica_list.append(replica)
         # first replica
-        if(len(self.replica_list.keys())==0):
+        if(len(self.replica_list)==1):
             self.primary_replica=replica
-            return message.ServerMessage(uuid=None, address=None)
+            self.replica_list_lock.release()
+            return message.ServerMessage(uuid='EMPTY', address='EMPTY')
         # not first
         else:
-            return self.primary_replica
+            self.replica_list_lock.release()
+            return message.ServerMessage(uuid=self.primary_replica.uuid ,
+                                         address=self.primary_replica.address)
 
     
     def get_replica_list(self, request, context):

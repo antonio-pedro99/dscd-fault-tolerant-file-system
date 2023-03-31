@@ -36,7 +36,7 @@ class Replica(servicer.ReplicaServicer):
             message.ServerMessage(uuid=self.uuid,address=self.address)
         )
 
-        if response.address == None:
+        if response.address == 'EMPTY':
             self.is_primary = True
 
         print('REPLICA REGISTERED WITH ADDRESS: ',self.address)
