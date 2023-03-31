@@ -2,6 +2,8 @@ import grpc
 import backup_protocol_pb2 as message
 import backup_protocol_pb2_grpc as servicer
 from port import get_new_port
+from google.protobuf import empty_pb2
+
 import uuid
 from concurrent import futures
 from threading import Lock
@@ -63,6 +65,7 @@ class Replica(servicer.ReplicaServicer):
         self.replicas.append(new_replica)
         print(f"NEW REPLICA {request.address} [ADDRESS] JOINED")  
         self.replicas_lock.release()
+        return empty_pb2.Empty()
 
 def main():
     my_replica=Replica()

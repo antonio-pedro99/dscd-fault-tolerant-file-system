@@ -11,6 +11,7 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
         self.current_registered=0
         self.replica_list=[]
         self.replica_list_lock=Lock()
+        self.notify_primary_lock = Lock()
         self.primary_replica=None # we will be saving object of ServerMessage-> it will contain both uuid and address
         
 
@@ -40,10 +41,11 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
         # not first
         else:
             #Notify primary
+            self.notify_primary_lock.acquire()
             replica_stub = servicer.ReplicaStub(grpc.insecure_channel(self.primary_replica.address))
 
             replica_stub.NotifyPrimary(message.ServerMessage(uuid=replica.uuid, address=replica.address))
-            
+            self.notify_primary_lock.release()
             self.replica_list_lock.release()
             return message.ServerMessage(uuid=self.primary_replica.uuid ,
                                          address=self.primary_replica.address)
