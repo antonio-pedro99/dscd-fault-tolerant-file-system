@@ -39,12 +39,17 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
             return message.ServerMessage(uuid='EMPTY', address='EMPTY')
         # not first
         else:
+            #Notify primary
+            replica_stub = servicer.ReplicaStub(grpc.insecure_channel(self.primary_replica.address))
+
+            replica_stub.NotifyPrimary(message.ServerMessage(uuid=replica.uuid, address=replica.address))
+            
             self.replica_list_lock.release()
             return message.ServerMessage(uuid=self.primary_replica.uuid ,
                                          address=self.primary_replica.address)
 
     
-    def get_replica_list(self, request, context):
+    def GetReplicas(self, request, context):
         self.replica_list_lock.acquire()
         print(f"replica LIST REQUEST FROM {request.id} [ADDRESS]")
         all_replicas=message.replicaList()

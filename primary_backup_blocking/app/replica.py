@@ -14,6 +14,8 @@ class Replica(servicer.ReplicaServicer):
         self.is_primary = False
         self.uuid=str(uuid.uuid1())
         self.registry_channel=grpc.insecure_channel('localhost:8888')
+        self.replicas = []
+        self.replicas_lock = Lock()
 
     def start(self):
         try:
@@ -49,11 +51,18 @@ class Replica(servicer.ReplicaServicer):
     def Rrite(self, request, context):
         pass
 
-    def Relete(self, request, context):
+    def Delete(self, request, context):
         pass
 
     def HandleWrite(self, request, context):
         pass
+
+    def NotifyPrimary(self, request, context):
+        self.replicas_lock.acquire()
+        new_replica = message.ServerMessage(uuid=request.uuid, address=request.address)
+        self.replicas.append(new_replica)
+        print(f"NEW REPLICA {request.address} [ADDRESS] JOINED")  
+        self.replicas_lock.release()
 
 def main():
     my_replica=Replica()

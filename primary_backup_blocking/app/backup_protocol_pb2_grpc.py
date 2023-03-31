@@ -35,6 +35,11 @@ class ReplicaStub(object):
                 request_serializer=backup__protocol__pb2.WriteRequest.SerializeToString,
                 response_deserializer=backup__protocol__pb2.WriteResponse.FromString,
                 )
+        self.NotifyPrimary = channel.unary_unary(
+                '/backup_protocol.Replica/NotifyPrimary',
+                request_serializer=backup__protocol__pb2.ServerMessage.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                )
 
 
 class ReplicaServicer(object):
@@ -64,6 +69,12 @@ class ReplicaServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def NotifyPrimary(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ReplicaServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -86,6 +97,11 @@ def add_ReplicaServicer_to_server(servicer, server):
                     servicer.HandleWrite,
                     request_deserializer=backup__protocol__pb2.WriteRequest.FromString,
                     response_serializer=backup__protocol__pb2.WriteResponse.SerializeToString,
+            ),
+            'NotifyPrimary': grpc.unary_unary_rpc_method_handler(
+                    servicer.NotifyPrimary,
+                    request_deserializer=backup__protocol__pb2.ServerMessage.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -165,6 +181,23 @@ class Replica(object):
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
+    @staticmethod
+    def NotifyPrimary(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/NotifyPrimary',
+            backup__protocol__pb2.ServerMessage.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
 
 class RegistryServerStub(object):
     """Missing associated documentation comment in .proto file."""
@@ -180,11 +213,6 @@ class RegistryServerStub(object):
                 request_serializer=backup__protocol__pb2.ServerMessage.SerializeToString,
                 response_deserializer=backup__protocol__pb2.ServerMessage.FromString,
                 )
-        self.NotifyPrimary = channel.unary_unary(
-                '/backup_protocol.RegistryServer/NotifyPrimary',
-                request_serializer=backup__protocol__pb2.ServerMessage.SerializeToString,
-                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                )
         self.GetReplicas = channel.unary_unary(
                 '/backup_protocol.RegistryServer/GetReplicas',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
@@ -196,12 +224,6 @@ class RegistryServerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def RegisterReplica(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def NotifyPrimary(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -220,11 +242,6 @@ def add_RegistryServerServicer_to_server(servicer, server):
                     servicer.RegisterReplica,
                     request_deserializer=backup__protocol__pb2.ServerMessage.FromString,
                     response_serializer=backup__protocol__pb2.ServerMessage.SerializeToString,
-            ),
-            'NotifyPrimary': grpc.unary_unary_rpc_method_handler(
-                    servicer.NotifyPrimary,
-                    request_deserializer=backup__protocol__pb2.ServerMessage.FromString,
-                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
             'GetReplicas': grpc.unary_unary_rpc_method_handler(
                     servicer.GetReplicas,
@@ -255,23 +272,6 @@ class RegistryServer(object):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.RegistryServer/RegisterReplica',
             backup__protocol__pb2.ServerMessage.SerializeToString,
             backup__protocol__pb2.ServerMessage.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def NotifyPrimary(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/backup_protocol.RegistryServer/NotifyPrimary',
-            backup__protocol__pb2.ServerMessage.SerializeToString,
-            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

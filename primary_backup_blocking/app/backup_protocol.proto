@@ -7,11 +7,11 @@ service Replica{
     rpc Write(WriteRequest) returns (WriteResponse);
     rpc Delete(ReadDeleteRequest) returns (Response);
     rpc HandleWrite(WriteRequest) returns (WriteResponse);
+    rpc NotifyPrimary(ServerMessage) returns  (google.protobuf.Empty);
 }
 
 service RegistryServer{
     rpc RegisterReplica(ServerMessage) returns (ServerMessage);
-    rpc NotifyPrimary(ServerMessage) returns  (google.protobuf.Empty);
     rpc GetReplicas(google.protobuf.Empty) returns (ServerListResponse);
 }
 
