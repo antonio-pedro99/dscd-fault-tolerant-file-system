@@ -2,8 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import backup_protocol_pb2 as backup__protocol__pb2
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
+import backup_protocol_pb2 as proto_dot_backup__protocol__pb2
 
 
 class ReplicaStub(object):
@@ -17,23 +17,23 @@ class ReplicaStub(object):
         """
         self.Read = channel.unary_unary(
                 '/backup_protocol.Replica/Read',
-                request_serializer=backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
-                response_deserializer=backup__protocol__pb2.ReadResponse.FromString,
+                request_serializer=proto_dot_backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
+                response_deserializer=proto_dot_backup__protocol__pb2.ReadResponse.FromString,
                 )
         self.Write = channel.unary_unary(
                 '/backup_protocol.Replica/Write',
-                request_serializer=backup__protocol__pb2.WriteRequest.SerializeToString,
-                response_deserializer=backup__protocol__pb2.WriteResponse.FromString,
+                request_serializer=proto_dot_backup__protocol__pb2.WriteRequest.SerializeToString,
+                response_deserializer=proto_dot_backup__protocol__pb2.WriteResponse.FromString,
                 )
         self.Delete = channel.unary_unary(
                 '/backup_protocol.Replica/Delete',
-                request_serializer=backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
-                response_deserializer=backup__protocol__pb2.Response.FromString,
+                request_serializer=proto_dot_backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
+                response_deserializer=proto_dot_backup__protocol__pb2.Response.FromString,
                 )
         self.HandleWrite = channel.unary_unary(
                 '/backup_protocol.Replica/HandleWrite',
-                request_serializer=backup__protocol__pb2.WriteRequest.SerializeToString,
-                response_deserializer=backup__protocol__pb2.WriteResponse.FromString,
+                request_serializer=proto_dot_backup__protocol__pb2.WriteRequest.SerializeToString,
+                response_deserializer=proto_dot_backup__protocol__pb2.WriteResponse.FromString,
                 )
 
 
@@ -69,23 +69,23 @@ def add_ReplicaServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Read': grpc.unary_unary_rpc_method_handler(
                     servicer.Read,
-                    request_deserializer=backup__protocol__pb2.ReadDeleteRequest.FromString,
-                    response_serializer=backup__protocol__pb2.ReadResponse.SerializeToString,
+                    request_deserializer=proto_dot_backup__protocol__pb2.ReadDeleteRequest.FromString,
+                    response_serializer=proto_dot_backup__protocol__pb2.ReadResponse.SerializeToString,
             ),
             'Write': grpc.unary_unary_rpc_method_handler(
                     servicer.Write,
-                    request_deserializer=backup__protocol__pb2.WriteRequest.FromString,
-                    response_serializer=backup__protocol__pb2.WriteResponse.SerializeToString,
+                    request_deserializer=proto_dot_backup__protocol__pb2.WriteRequest.FromString,
+                    response_serializer=proto_dot_backup__protocol__pb2.WriteResponse.SerializeToString,
             ),
             'Delete': grpc.unary_unary_rpc_method_handler(
                     servicer.Delete,
-                    request_deserializer=backup__protocol__pb2.ReadDeleteRequest.FromString,
-                    response_serializer=backup__protocol__pb2.Response.SerializeToString,
+                    request_deserializer=proto_dot_backup__protocol__pb2.ReadDeleteRequest.FromString,
+                    response_serializer=proto_dot_backup__protocol__pb2.Response.SerializeToString,
             ),
             'HandleWrite': grpc.unary_unary_rpc_method_handler(
                     servicer.HandleWrite,
-                    request_deserializer=backup__protocol__pb2.WriteRequest.FromString,
-                    response_serializer=backup__protocol__pb2.WriteResponse.SerializeToString,
+                    request_deserializer=proto_dot_backup__protocol__pb2.WriteRequest.FromString,
+                    response_serializer=proto_dot_backup__protocol__pb2.WriteResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -109,8 +109,8 @@ class Replica(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/Read',
-            backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
-            backup__protocol__pb2.ReadResponse.FromString,
+            proto_dot_backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
+            proto_dot_backup__protocol__pb2.ReadResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -126,8 +126,8 @@ class Replica(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/Write',
-            backup__protocol__pb2.WriteRequest.SerializeToString,
-            backup__protocol__pb2.WriteResponse.FromString,
+            proto_dot_backup__protocol__pb2.WriteRequest.SerializeToString,
+            proto_dot_backup__protocol__pb2.WriteResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -143,8 +143,8 @@ class Replica(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/Delete',
-            backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
-            backup__protocol__pb2.Response.FromString,
+            proto_dot_backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
+            proto_dot_backup__protocol__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -160,8 +160,8 @@ class Replica(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/HandleWrite',
-            backup__protocol__pb2.WriteRequest.SerializeToString,
-            backup__protocol__pb2.WriteResponse.FromString,
+            proto_dot_backup__protocol__pb2.WriteRequest.SerializeToString,
+            proto_dot_backup__protocol__pb2.WriteResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -177,18 +177,18 @@ class RegistryServerStub(object):
         """
         self.RegisterReplica = channel.unary_unary(
                 '/backup_protocol.RegistryServer/RegisterReplica',
-                request_serializer=backup__protocol__pb2.ServerMessage.SerializeToString,
-                response_deserializer=backup__protocol__pb2.ServerMessage.FromString,
+                request_serializer=proto_dot_backup__protocol__pb2.ServerMessage.SerializeToString,
+                response_deserializer=proto_dot_backup__protocol__pb2.ServerMessage.FromString,
                 )
         self.NotifyPrimary = channel.unary_unary(
                 '/backup_protocol.RegistryServer/NotifyPrimary',
-                request_serializer=backup__protocol__pb2.ServerMessage.SerializeToString,
+                request_serializer=proto_dot_backup__protocol__pb2.ServerMessage.SerializeToString,
                 response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 )
         self.GetReplicas = channel.unary_unary(
                 '/backup_protocol.RegistryServer/GetReplicas',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=backup__protocol__pb2.ServerListResponse.FromString,
+                response_deserializer=proto_dot_backup__protocol__pb2.ServerListResponse.FromString,
                 )
 
 
@@ -218,18 +218,18 @@ def add_RegistryServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'RegisterReplica': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterReplica,
-                    request_deserializer=backup__protocol__pb2.ServerMessage.FromString,
-                    response_serializer=backup__protocol__pb2.ServerMessage.SerializeToString,
+                    request_deserializer=proto_dot_backup__protocol__pb2.ServerMessage.FromString,
+                    response_serializer=proto_dot_backup__protocol__pb2.ServerMessage.SerializeToString,
             ),
             'NotifyPrimary': grpc.unary_unary_rpc_method_handler(
                     servicer.NotifyPrimary,
-                    request_deserializer=backup__protocol__pb2.ServerMessage.FromString,
+                    request_deserializer=proto_dot_backup__protocol__pb2.ServerMessage.FromString,
                     response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
             'GetReplicas': grpc.unary_unary_rpc_method_handler(
                     servicer.GetReplicas,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=backup__protocol__pb2.ServerListResponse.SerializeToString,
+                    response_serializer=proto_dot_backup__protocol__pb2.ServerListResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -253,8 +253,8 @@ class RegistryServer(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.RegistryServer/RegisterReplica',
-            backup__protocol__pb2.ServerMessage.SerializeToString,
-            backup__protocol__pb2.ServerMessage.FromString,
+            proto_dot_backup__protocol__pb2.ServerMessage.SerializeToString,
+            proto_dot_backup__protocol__pb2.ServerMessage.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -270,7 +270,7 @@ class RegistryServer(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.RegistryServer/NotifyPrimary',
-            backup__protocol__pb2.ServerMessage.SerializeToString,
+            proto_dot_backup__protocol__pb2.ServerMessage.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -288,6 +288,6 @@ class RegistryServer(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.RegistryServer/GetReplicas',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            backup__protocol__pb2.ServerListResponse.FromString,
+            proto_dot_backup__protocol__pb2.ServerListResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
