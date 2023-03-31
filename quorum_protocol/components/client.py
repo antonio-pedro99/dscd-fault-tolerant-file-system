@@ -10,21 +10,27 @@ from threading import Lock
 class Client:
 
     def __init__(self) -> None:
+        self.registry_channel=grpc.insecure_channel('localhost:50001')
         pass
+
+    def start(self):
+        self.Write('ads','adsaad')
 
     def Read(self):
         pass
 
-    def Write(self, name, text, uuid=None):
+    def Write(self, name, text, file_uuid=None):
         write_replicas=self.get_replicas('WRITE')
-        if(uuid==None):
-            uuid=str(uuid.uuid1())
-        request=message.WriteRequest(name=name, content=text, uuid=uuid)
+        print(write_replicas)
+        if(file_uuid==None): # it is a new file that is been written 
+            file_uuid=str(uuid.uuid1())
+        request=message.WriteRequest(name=name, content=text, uuid=file_uuid)
         for replica in write_replicas:
-            channel=grpc.insecure_channel(replica)
+            channel=grpc.insecure_channel(replica, options=(('grpc.enable_http_proxy', 0),))
             write_stub = servicer.ReplicaStub(channel)
             response = write_stub.Write(request)
-            
+            # print(response)
+
         pass
 
     def Delete(self):
@@ -37,3 +43,14 @@ class Client:
             message.RequestType(type=type)
         )
         return list([msg.address for msg in response.serverList])
+    
+
+
+def main():
+    my_client=Client()
+    my_client.start()
+    return
+
+
+if __name__=='__main__':
+    main()

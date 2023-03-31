@@ -6,6 +6,9 @@ import uuid
 from concurrent import futures
 from threading import Lock
 import os
+import shutil
+import pandas as pd
+from time import sleep
 
 class Replica(servicer.ReplicaServicer):
 
@@ -14,31 +17,33 @@ class Replica(servicer.ReplicaServicer):
         self.address='localhost:'+str(get_new_port())
         self.MAXCLIENTS=10
         self.uuid=str(uuid.uuid1())
-        # self.CLIENTELE=[]
-        # self.article_list=[]
-        # self.client_lock=Lock()
-        self.article_lock=Lock()
+        # making a unified lock for while folder
+        # we can also have locks for individual file
+        self.files={}
+        self.folder_lock=Lock()
         self.registry_channel=grpc.insecure_channel('localhost:50001')
+        self.folder=os.path.join(str(os.getcwd()),"database",self.uuid)
         pass
 
     def start(self):
         try:
             print('-----STARTING REPLICA------')
             self.SetupReplica()
-            self.RegisterReplica()
             self.CreateDirectory()
+            # self.write_new_file( "hello", "plat", "cskdj ksf c", "hello therer")
+            self.RegisterReplica()
         except KeyboardInterrupt:
             print('-----CLOSING REPLICA------')
+            shutil.rmtree(self.folder) # deleting the directory
             return
 
     def CreateDirectory(self):
         try:
-            os.mkdir(self.uuid)
+            os.makedirs(self.folder, 0o777 )
         except OSError as error: 
+            print("[ERROR] Creating replica folder")
             print(error)
 
-    def DeleteDirectory(self):
-        pass
 
     def SetupReplica(self):
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=self.MAXCLIENTS))
@@ -52,7 +57,6 @@ class Replica(servicer.ReplicaServicer):
             message.ServerMessage(uuid=self.uuid,address=self.address)
         )
         print('REPLICA REGISTERED WITH ADDRESS: ',self.address)
-        print(self.get_replicas('READ'))
         self.server.start()
         self.server.wait_for_termination()
 
@@ -62,8 +66,34 @@ class Replica(servicer.ReplicaServicer):
 
     def Write(self, request, context):
         # handling the write request received from client
+        filename=request.name
+        content=request.content
+        file_uuid=request.uuid
+        time = pd.Timestamp('now', tz='Asia/Kolkata').time()
+        # self.folder_lock.acquire()
 
+        # new file is been written
+        if file_uuid not in self.files.keys():
+            response = self.write_new_file(filename, content, file_uuid, time)
+            # self.folder_lock.release()
+            return response
         pass
+
+    def write_new_file(self, filename, content, file_uuid, timestamp):
+        status='SUCCESS'
+        # try:
+        print("came here 2")
+        file_path=os.path.join(self.folder,filename+".txt")
+        # print('\n',file_path)
+        file = open(file_path, 'w+')
+        file.write(content)
+        file.close()
+        # self.files[file_uuid]=tuple(filename,timestamp)
+        # except:
+        #     status='FAIL'
+        print("came here")
+        return message.WriteResponse(status=status, uuid=file_uuid, version=str(timestamp))
+
 
     def Delete(self, request, context):
         pass

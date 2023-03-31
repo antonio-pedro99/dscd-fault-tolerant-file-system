@@ -58,12 +58,12 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
             message.ServerMessage(uuid="456", address="localhost:50052"),
             message.ServerMessage(uuid="789", address="localhost:50053")
         ]
-        print(f"REPLICA LIST REQUEST FROM {request.id} [ADDRESS]")
+        # print(f"REPLICA LIST REQUEST FROM {request.id} [ADDRESS]")
         #all_replicas=message.ServerListResponse(serverList=self.replica_list)
         #all_replicas.serverList.extend(list(self.replica_list.values()))
         #self.replica_list_lock.release()
         response = message.ServerListResponse()
-        response.serverList.extend(self.replica_list)
+        response.serverList.extend(server_list)
         self.replica_list_lock.release()
         return response
     
