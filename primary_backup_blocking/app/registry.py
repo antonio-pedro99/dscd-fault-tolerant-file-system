@@ -14,7 +14,6 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
         self.notify_primary_lock = Lock()
         self.primary_replica=None # we will be saving object of ServerMessage-> it will contain both uuid and address
         
-
     def start(self):
         try:
             print("STARTING REGISTRY")
@@ -53,11 +52,20 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
     
     def GetReplicas(self, request, context):
         self.replica_list_lock.acquire()
-        print(f"replica LIST REQUEST FROM {request.id} [ADDRESS]")
-        all_replicas=message.replicaList()
-        all_replicas.replicaList.extend(list(self.replica_list.values()))
+
+        server_list = [
+            message.ServerMessage(uuid="123", address="localhost:50051"),
+            message.ServerMessage(uuid="456", address="localhost:50052"),
+            message.ServerMessage(uuid="789", address="localhost:50053")
+        ]
+        print(f"REPLICA LIST REQUEST FROM {request.id} [ADDRESS]")
+        #all_replicas=message.ServerListResponse(serverList=self.replica_list)
+        #all_replicas.serverList.extend(list(self.replica_list.values()))
+        #self.replica_list_lock.release()
+        response = message.ServerListResponse()
+        response.serverList.extend(self.replica_list)
         self.replica_list_lock.release()
-        return all_replicas
+        return response
     
 
 def main():
