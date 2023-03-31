@@ -4,7 +4,7 @@ import backup_protocol_pb2_grpc as servicer
 from concurrent import futures
 from threading import Lock
 
-class ReplicaRegistryService:
+class ReplicaRegistryService(servicer.RegistryServerServicer):
 
     def __init__(self) -> None:
         super().__init__()
@@ -18,7 +18,7 @@ class ReplicaRegistryService:
         try:
             print("STARTING REGISTRY")
             registry_replica = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-            servicer.add_ReplicaServicer_to_server(ReplicaRegistryService(),registry_replica)
+            servicer.add_RegistryServerServicer_to_server(ReplicaRegistryService(),registry_replica)
             print("REGISTRY STARTED")
             registry_replica.add_insecure_port('localhost:8888')
             registry_replica.start()
@@ -27,7 +27,7 @@ class ReplicaRegistryService:
             print("------CLOSING REGISTRY------")
             return
 
-    def register_replica(self, request, context):
+    def RegisterReplica(self, request, context):
         self.replica_list_lock.acquire()
         print(f"JOIN REQUEST FROM REPLICA {request.address} [ADDRESS]")        
         replica=message.ServerMessage(uuid=request.uuid, address=request.address)
@@ -49,8 +49,6 @@ class ReplicaRegistryService:
         self.replica_list_lock.release()
         return all_replicas
     
-    def read(self):
-        pass
 
 def main():
     my_registry=ReplicaRegistryService()
