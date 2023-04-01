@@ -24,24 +24,31 @@ class Client:
         except Exception as e:
             return e
     
-    def write(self, replica:message.ServerMessage):
+    def write(self, replica:message.ServerMessage, name=None, content=None ):
         
         replica_stub = servicer.ReplicaStub(channel = grpc.insecure_channel(replica.address) )
         file_uuid = str(uuid.uuid4())
-        name = input("Enter the file name: ")
-        content = input("Enter the file content: ")
+        if name==None and content==None:
+            name = input("Enter the file name: ")
+            content = input("Enter the file content: ")
         request = message.WriteRequest(name=name, uuid=file_uuid, content=content)
         response = replica_stub.Write(request)
         print(response)
       
 
 
-    def read(self,replica:message.ServerMessage):
-        # TODO document why this method is empty
+    def read(self,file_uuid,replica:message.ServerMessage):
+        replica_stub = servicer.ReplicaStub(channel = grpc.insecure_channel(replica.address) )
+        request = message.ReadDeleteRequest(uuid=file_uuid)
+        response = replica_stub.Read(request)
+        print(response)
         pass
 
-    def delete(self):
-        # TODO document why this method is empty
+    def delete(self, file_uuid, replica:message.ServerMessage):
+        replica_stub = servicer.ReplicaStub(channel = grpc.insecure_channel(replica.address) )
+        request = message.ReadDeleteRequest(uuid=file_uuid)
+        response = replica_stub.Delete(request)
+        print(response)
         pass
 
 
@@ -51,14 +58,18 @@ def show_menu(client:Client):
         replica = random.choice(client.replicas)
 
         print("\n---------MENU--------\n1. Write")
-        print("2. Read\n3. Exit\n")
+        print("2. Read\n3. Delete\n4. Exit\n")
         try:
             choice=int(input('Choose one option: '))
             if(choice==1):
-                client.write(replica=replica)
+                client.write(replica=replica, name='antonio',content='Hello bro')
             elif(choice==2):
-                client.read(replica=replica)
+                file_uuid=input("Enter the uuid of file: ")
+                client.read(file_uuid = file_uuid, replica=replica)
             elif(choice==3):
+                file_uuid=input("Enter the uuid of file: ")
+                client.delete(file_uuid = file_uuid, replica=replica)
+            elif(choice==4):
                 print("EXITING")
                 return
         except ValueError:

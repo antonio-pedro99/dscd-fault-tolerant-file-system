@@ -6,6 +6,8 @@ service Replica{
     rpc Read(ReadDeleteRequest) returns (ReadResponse);
     rpc Write(WriteRequest) returns (WriteResponse);
     rpc Delete(ReadDeleteRequest) returns (Response);
+    rpc BroadcastDelete(ReadDeleteRequest) returns (Response);
+    rpc LocalDelete(ReadDeleteRequest) returns (Response);
     rpc BroadcastWrite(WriteRequest) returns (WriteResponse);
     rpc LocalWrite(WriteRequest) returns (WriteResponse);
     rpc NotifyPrimary(ServerMessage) returns  (google.protobuf.Empty);
@@ -50,6 +52,7 @@ message ReadResponse{
 
 message Response{
     Status response=1;
+    string reason=2;
 }
 
 message FileDetail{

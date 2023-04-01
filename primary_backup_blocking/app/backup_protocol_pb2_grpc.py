@@ -30,6 +30,16 @@ class ReplicaStub(object):
                 request_serializer=backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
                 response_deserializer=backup__protocol__pb2.Response.FromString,
                 )
+        self.BroadcastDelete = channel.unary_unary(
+                '/backup_protocol.Replica/BroadcastDelete',
+                request_serializer=backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
+                response_deserializer=backup__protocol__pb2.Response.FromString,
+                )
+        self.LocalDelete = channel.unary_unary(
+                '/backup_protocol.Replica/LocalDelete',
+                request_serializer=backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
+                response_deserializer=backup__protocol__pb2.Response.FromString,
+                )
         self.BroadcastWrite = channel.unary_unary(
                 '/backup_protocol.Replica/BroadcastWrite',
                 request_serializer=backup__protocol__pb2.WriteRequest.SerializeToString,
@@ -68,6 +78,18 @@ class ReplicaServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def BroadcastDelete(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def LocalDelete(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def BroadcastWrite(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -101,6 +123,16 @@ def add_ReplicaServicer_to_server(servicer, server):
             ),
             'Delete': grpc.unary_unary_rpc_method_handler(
                     servicer.Delete,
+                    request_deserializer=backup__protocol__pb2.ReadDeleteRequest.FromString,
+                    response_serializer=backup__protocol__pb2.Response.SerializeToString,
+            ),
+            'BroadcastDelete': grpc.unary_unary_rpc_method_handler(
+                    servicer.BroadcastDelete,
+                    request_deserializer=backup__protocol__pb2.ReadDeleteRequest.FromString,
+                    response_serializer=backup__protocol__pb2.Response.SerializeToString,
+            ),
+            'LocalDelete': grpc.unary_unary_rpc_method_handler(
+                    servicer.LocalDelete,
                     request_deserializer=backup__protocol__pb2.ReadDeleteRequest.FromString,
                     response_serializer=backup__protocol__pb2.Response.SerializeToString,
             ),
@@ -175,6 +207,40 @@ class Replica(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/Delete',
+            backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
+            backup__protocol__pb2.Response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def BroadcastDelete(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/BroadcastDelete',
+            backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
+            backup__protocol__pb2.Response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def LocalDelete(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/LocalDelete',
             backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
             backup__protocol__pb2.Response.FromString,
             options, channel_credentials,
