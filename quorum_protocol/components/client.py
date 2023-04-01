@@ -26,10 +26,11 @@ class Client:
             file_uuid=str(uuid.uuid1())
         request=message.WriteRequest(name=name, content=text, uuid=file_uuid)
         for replica in write_replicas:
-            channel=grpc.insecure_channel(replica, options=(('grpc.enable_http_proxy', 0),))
+            print('sending in', replica)
+            channel=grpc.insecure_channel(str(replica))
             write_stub = servicer.ReplicaStub(channel)
             response = write_stub.Write(request)
-            # print(response)
+            print(response)
 
         pass
 

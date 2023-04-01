@@ -6,9 +6,6 @@ from threading import Lock
 import random
 import signal
 
-def terminate(SignalNumber,Frame):
-    raise KeyboardInterrupt
-
 class RegistryServer(servicer.RegistryServerServicer):
     num_replica=0
     N_r=0
@@ -47,7 +44,6 @@ class RegistryServer(servicer.RegistryServerServicer):
             self.set_params(N, N_r, N_w)
             registry_server = grpc.server(futures.ThreadPoolExecutor(max_workers=self.num_replica))
             servicer.add_RegistryServerServicer_to_server(RegistryServer(),registry_server)
-            signal.signal(signal.SIGINT, terminate)
             print("REGISTRY STARTED")
             registry_server.add_insecure_port('localhost:50001')
             registry_server.start()
@@ -66,7 +62,7 @@ class RegistryServer(servicer.RegistryServerServicer):
         self.replica_list[request.uuid]=message.ServerMessage(uuid=request.uuid,address=request.address)
         self.current_registered+=1
         self.replica_list_lock.release()
-        return message.ServerMessage(uuid=None,address=None)
+        return message.ServerMessage(uuid=str(self.current_registered),address=None)
 
     def GetReplicas(self, request, context):
         self.replica_list_lock.acquire()

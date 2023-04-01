@@ -12,30 +12,26 @@ from time import sleep
 
 class Replica(servicer.ReplicaServicer):
 
-    def __init__(self):
+    def __init__(self, address):
         super().__init__()
-        self.address='localhost:'+str(get_new_port())
         self.MAXCLIENTS=10
         self.uuid=str(uuid.uuid1())
         # making a unified lock for while folder
         # we can also have locks for individual file
         self.files={}
         self.folder_lock=Lock()
+        self.address=address
+        port=tuple(self.address.split(':'))[1]
+        self.folder=os.path.join(str(os.getcwd()),"database",port)
         self.registry_channel=grpc.insecure_channel('localhost:50001')
-        self.folder=os.path.join(str(os.getcwd()),"database",self.uuid)
         pass
 
     def start(self):
-        try:
-            print('-----STARTING REPLICA------')
-            self.SetupReplica()
-            self.CreateDirectory()
-            # self.write_new_file( "hello", "plat", "cskdj ksf c", "hello therer")
-            self.RegisterReplica()
-        except KeyboardInterrupt:
-            print('-----CLOSING REPLICA------')
-            shutil.rmtree(self.folder) # deleting the directory
-            return
+        self.RegisterReplica()
+        self.CreateDirectory()
+
+    def stop(self):
+        shutil.rmtree(self.folder) # deleting the directory
 
     def CreateDirectory(self):
         try:
@@ -57,8 +53,6 @@ class Replica(servicer.ReplicaServicer):
             message.ServerMessage(uuid=self.uuid,address=self.address)
         )
         print('REPLICA REGISTERED WITH ADDRESS: ',self.address)
-        self.server.start()
-        self.server.wait_for_termination()
 
 
     def Read(self, request, context):
@@ -84,19 +78,14 @@ class Replica(servicer.ReplicaServicer):
         print("came here 2")
         path = os.path.join(self.folder, f'{filename}.txt')
         print(path)
-        path = os.path.normpath(path)
-        print(path)
-        f = open(path.removesuffix("\\"), 'w')
-        #file_path=os.path.join(self.folder,f"{filename}.txt")
-        #print('\n',file_path)
-        #f = open(f"{self.folder}/t.txt", 'w+')
-        #file.write(content)
+        file = open(path, 'w+')
+        file.write(content)
         #file.close()
         # self.files[file_uuid]=tuple(filename,timestamp)
         # except:
         #     status='FAIL'
         print("came here")
-        return message.WriteResponse(status=status, uuid=file_uuid, version=str(timestamp))
+        return message.WriteResponse(status=status, uuid=file_uuid, version=str("timestamp"))
 
 
     def Delete(self, request, context):
@@ -104,9 +93,24 @@ class Replica(servicer.ReplicaServicer):
 
 
 
-def main():
-    my_replica=Replica()
-    my_replica.start()
+def main(address=None):
+    if(address==None):
+        address='localhost:'+str(get_new_port())
+    my_replica=Replica(address=address)
+    MAXCLIENTS=10
+    try:
+        print('-----STARTING REPLICA------')
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=MAXCLIENTS))
+        server.add_insecure_port(address)
+        servicer.add_ReplicaServicer_to_server(Replica(address),server)
+        print("REGISTRY STARTED")
+        my_replica.start()
+        server.start()
+        server.wait_for_termination()
+    except KeyboardInterrupt:
+        print('-----CLOSING REPLICA------')
+        my_replica.stop()
+        return
     return
 
 
