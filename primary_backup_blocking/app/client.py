@@ -25,16 +25,15 @@ class Client:
             return e
     
     def write(self, replica:message.ServerMessage):
-        try:
-            replica_stub = servicer.ReplicaStub(channel = grpc.insecure_channel(replica.address) )
-            file_uuid = str(uuid.uuid4())
-            name = input("Enter the file name: ")
-            content = input("Enter the file content: ")
-            request = message.WriteRequest(name=name, uuid=file_uuid, content=content)
-            response = replica_stub.Write(request)
-            print(response)
-        except Exception as e:
-            print(e)
+        
+        replica_stub = servicer.ReplicaStub(channel = grpc.insecure_channel(replica.address) )
+        file_uuid = str(uuid.uuid4())
+        name = input("Enter the file name: ")
+        content = input("Enter the file content: ")
+        request = message.WriteRequest(name=name, uuid=file_uuid, content=content)
+        response = replica_stub.Write(request)
+        print(response)
+      
 
 
     def read(self):

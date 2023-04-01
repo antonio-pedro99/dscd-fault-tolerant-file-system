@@ -17,7 +17,6 @@ class Replica(servicer.ReplicaServicer):
 
     def __init__(self, address:str):
         super().__init__()
-
         self.is_primary = False
         self.uuid=str(uuid.uuid4())
         self.address = address
@@ -27,7 +26,6 @@ class Replica(servicer.ReplicaServicer):
         self.data_store_map = {}
         self.replicas_lock = Lock()
         self.write_lock = Lock()
-        self.primary = {}
 
 
     def start(self):
@@ -54,41 +52,62 @@ class Replica(servicer.ReplicaServicer):
         if response.address == 'EMPTY':
             self.is_primary = True
         
-        if self.is_primary == False:
-              self.primary["primary"] = message.ServerMessage(uuid=response.uuid, address=response.address)
-
+        self.primary = response.address
+        print(self.primary)  
         print('REPLICA REGISTERED WITH ADDRESS: ',self.address)
+      
 
     def Read(self, request, context):
         pass
 
     def Write(self, request: message.WriteRequest, context):
         self.write_lock.acquire()
-        print(f'WRITE REQUEST FOR FILE {request.uuid}: UUID')
-        
-        status = "FAILED"
-        print(self.primary)
-        file_path = self.folder.joinpath(f"{request.name}.txt")
-        if request.uuid not in self.data_store_map.keys() and file_path.exists() == False:
-            #new file
-            with open(file_path.resolve(), "w") as f:
-                f.write(request.content)
-                #add the file uuid as the key and the version as the value
-                f.close()
-                self.data_store_map[request.uuid] = ctime(os.path.getctime(file_path.resolve()))
-                
-            status = "SUCCESS"
-        
-        response = message.WriteResponse(status=status, uuid=request.uuid, version=self.data_store_map[request.uuid])
+      
+        response = message.WriteResponse()
+        if self.is_primary:
+           self.HandleWrite(request = request, context = context)
+        else:
+            print("I am not the primary, I need to send it to the PR")
+            stub = servicer.ReplicaStub(grpc.insecure_channel(self.primary))
+
+            response = stub.HandleWrite(message.WriteRequest(name = request.name, content = request.content, uuid = request.uuid))
         
         self.write_lock.release()
         return response
+
     
     def Delete(self, request, context):
         pass
 
     def HandleWrite(self, request, context):
-        pass
+        print("I the primary, First I will write")
+        response = self.__write__(request = request)
+
+        print(response)
+        print("Voila, Now I will broadcast")
+        for _rep in self.replicas:
+            stub = servicer.ReplicaStub(grpc.insecure_channel(_rep.address))
+            reply = stub.Write(message.WriteRequest(name=request.name, uuid = response.uuid, content=request.content))
+            print(reply)
+        return response
+
+
+    def __write__(self, request: message.WriteRequest)->message.WriteResponse:
+        print(f'WRITE REQUEST FOR FILE {request.uuid}: UUID')
+        file_path = self.folder.joinpath(f"{request.name}.txt")
+        
+        with open(file_path.resolve(), "w") as f:
+                f.write(request.content)
+                f.close()
+                self.data_store_map[request.uuid] = ctime(os.path.getctime(file_path.resolve()))
+        
+        status = "SUCCESS"
+
+        print("Version")
+        print(self.data_store_map[request.uuid])
+        
+        return message.WriteResponse(status=status, uuid=request.uuid, version=self.data_store_map[request.uuid])
+
 
     def NotifyPrimary(self, request, context):
         self.replicas_lock.acquire()
@@ -101,12 +120,12 @@ class Replica(servicer.ReplicaServicer):
 def main():
     address = 'localhost:'+str(get_new_port())
     replica = Replica(address = address)
-
+  
     try:
         print('-----STARTING REPLICA------')
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=50))
         server.add_insecure_port(address = address)
-        servicer.add_ReplicaServicer_to_server(Replica(address = address),server)
+        servicer.add_ReplicaServicer_to_server(replica, server)
         print("REGISTRY STARTED")
 
         replica.start()
