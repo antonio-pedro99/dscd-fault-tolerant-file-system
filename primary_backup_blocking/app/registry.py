@@ -9,7 +9,7 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
     def __init__(self) -> None:
         super().__init__()
         self.current_registered=0
-        self.replica_list=[]
+        self.replica_list={}
         self.replica_list_lock=Lock()
         self.notify_primary_lock = Lock()
         self.primary_replica=None # we will be saving object of ServerMessage-> it will contain both uuid and address
@@ -31,9 +31,9 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
         self.replica_list_lock.acquire()
         print(f"JOIN REQUEST FROM REPLICA {request.address} [ADDRESS]")        
         replica=message.ServerMessage(uuid=request.uuid, address=request.address)
-        self.replica_list.append(replica)
+        self.replica_list[request.uuid] = replica
         # first replica
-        if(len(self.replica_list)==1):
+        if(len(self.replica_list.keys())==1):
             self.primary_replica=replica
             self.replica_list_lock.release()
             return message.ServerMessage(uuid='EMPTY', address='EMPTY')
@@ -52,18 +52,8 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
     
     def GetReplicas(self, request, context):
         self.replica_list_lock.acquire()
-
-        server_list = [
-            message.ServerMessage(uuid="123", address="localhost:50051"),
-            message.ServerMessage(uuid="456", address="localhost:50052"),
-            message.ServerMessage(uuid="789", address="localhost:50053")
-        ]
-        # print(f"REPLICA LIST REQUEST FROM {request.id} [ADDRESS]")
-        #all_replicas=message.ServerListResponse(serverList=self.replica_list)
-        #all_replicas.serverList.extend(list(self.replica_list.values()))
-        #self.replica_list_lock.release()
-        response = message.ServerListResponse()
-        response.serverList.extend(server_list)
+        print("SERVER LIST REQUEST FROM")
+        response =   message.ServerListResponse(serverList=self.replica_list.values())
         self.replica_list_lock.release()
         return response
     
