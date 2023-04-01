@@ -117,8 +117,7 @@ class Replica(servicer.ReplicaServicer):
         if response.response==0:
             total_ack_received+=1
         else:
-            reason=response.reason  
-        print(response.response) 
+            reason=response.reason
 
         print("Voila, Now I will broadcast")
         # here is the loop
@@ -142,7 +141,6 @@ class Replica(servicer.ReplicaServicer):
     # handle all the consitions here
     def LocalDelete(self, request, context):
         file_uuid=request.uuid
-        self.write_lock.acquire()
 
         # file is in local map and present in the folder 
         if (file_uuid in self.data_store_map.keys()) and self.data_store_map[file_uuid]:
@@ -156,10 +154,9 @@ class Replica(servicer.ReplicaServicer):
             # except:
             #     status='FAIL'
             #     reason='FAILED TO DELETE'
-            self.write_lock.release()
             return message.Response(response=status, reason=reason)
         
-        self.write_lock.release()
+        return message.Response()
         
 
     # this is handing local write
