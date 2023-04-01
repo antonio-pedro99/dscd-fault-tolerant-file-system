@@ -62,7 +62,7 @@ class Replica(servicer.ReplicaServicer):
 
     def Write(self, request: message.WriteRequest, context):
         self.write_lock.acquire()
-      
+        print(f'WRITE REQUEST FOR FILE {request.uuid}: UUID')
         response = message.WriteResponse()
         if self.is_primary:
            self.HandleWrite(request = request, context = context)
@@ -80,20 +80,20 @@ class Replica(servicer.ReplicaServicer):
         pass
 
     def HandleWrite(self, request, context):
-        print("I the primary, First I will write")
+        print("RECEIVED FORWARD WRITE REQUEST")
+
         response = self.__write__(request = request)
 
-        print(response)
         print("Voila, Now I will broadcast")
         for _rep in self.replicas:
             stub = servicer.ReplicaStub(grpc.insecure_channel(_rep.address))
             reply = stub.Write(message.WriteRequest(name=request.name, uuid = response.uuid, content=request.content))
-            print(reply)
+        
         return response
 
 
     def __write__(self, request: message.WriteRequest)->message.WriteResponse:
-        print(f'WRITE REQUEST FOR FILE {request.uuid}: UUID')
+       
         file_path = self.folder.joinpath(f"{request.name}.txt")
         
         with open(file_path.resolve(), "w") as f:
@@ -103,8 +103,8 @@ class Replica(servicer.ReplicaServicer):
         
         status = "SUCCESS"
 
-        print("Version")
-        print(self.data_store_map[request.uuid])
+        #print("Version")
+        #print(self.data_store_map[request.uuid])
         
         return message.WriteResponse(status=status, uuid=request.uuid, version=self.data_store_map[request.uuid])
 
