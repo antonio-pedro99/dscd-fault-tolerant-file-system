@@ -3,6 +3,7 @@
 import grpc
 
 import backup_protocol_pb2 as backup__protocol__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
 class ReplicaStub(object):
@@ -29,6 +30,11 @@ class ReplicaStub(object):
                 request_serializer=backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
                 response_deserializer=backup__protocol__pb2.Response.FromString,
                 )
+        self.GetAllData = channel.unary_unary(
+                '/backup_protocol.Replica/GetAllData',
+                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                response_deserializer=backup__protocol__pb2.AllData.FromString,
+                )
 
 
 class ReplicaServicer(object):
@@ -52,6 +58,12 @@ class ReplicaServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetAllData(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ReplicaServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -69,6 +81,11 @@ def add_ReplicaServicer_to_server(servicer, server):
                     servicer.Delete,
                     request_deserializer=backup__protocol__pb2.ReadDeleteRequest.FromString,
                     response_serializer=backup__protocol__pb2.Response.SerializeToString,
+            ),
+            'GetAllData': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetAllData,
+                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    response_serializer=backup__protocol__pb2.AllData.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -128,6 +145,23 @@ class Replica(object):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/Delete',
             backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
             backup__protocol__pb2.Response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetAllData(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/GetAllData',
+            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            backup__protocol__pb2.AllData.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

@@ -7,6 +7,7 @@ from concurrent import futures
 from threading import Lock
 import datetime
 from time import sleep
+from google.protobuf import empty_pb2
 
 class Client:
 
@@ -14,18 +15,23 @@ class Client:
         self.registry_channel=grpc.insecure_channel('localhost:50001')
         pass
 
-    def start(self):
+    def run_test(self):
         x = self.Write('file1','THIS IS FILE 1') # create new file
         sleep(2)
         self.Read(x) # create new file with existing name
+        self.read_all()
         sleep(2)
         y = self.Write('file2','THIS IS FILE 2') # update existing file
+        self.read_all()
         sleep(2)
         self.Read(y)
+        self.read_all()
         sleep(2)
         self.Delete(x)
+        self.read_all()
         sleep(2)
         self.Read(x)
+        self.read_all()
         # 
         pass
 
@@ -145,6 +151,7 @@ class Client:
             print(f'REASON: {reason}')
         else:
             print("***** DELETE SUCCESS *****")
+            print(f'uuid: {file_uuid}')
 
         pass
 
@@ -157,10 +164,22 @@ class Client:
         return list([msg.address for msg in response.serverList])
     
 
+    def read_all(self):
+        read_replicas=self.get_replicas('ALL')
+        print(f'{"="*10} ALL DATA {"="*10}')
+        for replica in read_replicas:
+            print(f'From Address: {replica}')
+            channel = grpc.insecure_channel(str(replica))
+            read_stub = servicer.ReplicaStub(channel)
+            response = read_stub.GetAllData(empty_pb2.Empty())
+            for data in response.readResponse:
+                print(data)
+        print(f'{"="*30}')
+
 
 def main():
     my_client=Client()
-    my_client.start()
+    my_client.run_test()
     return
 
 

@@ -1,10 +1,12 @@
 syntax = "proto3";
 package backup_protocol;
+import "google/protobuf/empty.proto";
 
 service Replica{
     rpc Read(ReadDeleteRequest) returns (ReadResponse);
     rpc Write(WriteRequest) returns (WriteResponse);
     rpc Delete(ReadDeleteRequest) returns (Response);
+    rpc GetAllData(google.protobuf.Empty) returns (AllData);
 }
 
 service RegistryServer{
@@ -35,6 +37,10 @@ message WriteResponse {
 
 message ReadDeleteRequest{
     string uuid=1;
+}
+
+message AllData{
+    repeated ReadResponse readResponse = 1;
 }
 
 message ReadResponse{

@@ -13,8 +13,6 @@ def start_registry():
     my_registry.start(5,3,3)
 
 def start_replica():
-    # my_replica=Replica()
-    # my_replica.start
     replica.main()
     
 

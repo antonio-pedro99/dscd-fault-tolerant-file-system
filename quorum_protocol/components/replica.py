@@ -130,7 +130,7 @@ class Replica(servicer.ReplicaServicer):
         if (file_uuid in self.files.keys()) and (self.files[file_uuid][0]==None):
             self.folder_lock.release()
             return message.ReadResponse(status='FAIL',name='FILE ALREADY DELETED',
-                                        content='Null',version='Null')
+                                        content='Null',version=self.files[file_uuid][1])
         pass
 
 
@@ -186,6 +186,15 @@ class Replica(servicer.ReplicaServicer):
             status='FAIL'
             reason='FAILED TO DELETE'
         return message.Response(response=status, reason=reason)
+    
+    def GetAllData(self, request, context):
+        data_to_send=message.AllData()
+        for file_uuid in self.files.keys():
+            data_to_send.readResponse.append(
+                self.Read(message.ReadDeleteRequest(uuid=file_uuid) , context)
+            )
+        return data_to_send
+        pass
 
 
 def main(address=None):
