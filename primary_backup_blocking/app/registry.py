@@ -42,7 +42,7 @@ class ReplicaRegistryService(servicer.RegistryServerServicer):
             #Notify primary
             self.notify_primary_lock.acquire()
             replica_stub = servicer.ReplicaStub(grpc.insecure_channel(self.primary_replica.address))
-
+            print(self.primary_replica)
             replica_stub.NotifyPrimary(message.ServerMessage(uuid=replica.uuid, address=replica.address))
             self.notify_primary_lock.release()
             self.replica_list_lock.release()

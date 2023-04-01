@@ -6,7 +6,8 @@ import uuid
 from concurrent import futures
 from threading import Lock
 import datetime
-
+from time import sleep
+from google.protobuf import empty_pb2
 
 class Client:
 
@@ -14,10 +15,23 @@ class Client:
         self.registry_channel=grpc.insecure_channel('localhost:50001')
         pass
 
-    def start(self):
-        x = self.Write('ads','plant') # create new file
+    def run_test(self):
+        x = self.Write('file1','THIS IS FILE 1') # create new file
+        sleep(2)
         self.Read(x) # create new file with existing name
-        # self.Write('ads','Alien', x) # update existing file
+        self.read_all()
+        sleep(2)
+        y = self.Write('file2','THIS IS FILE 2') # update existing file
+        self.read_all()
+        sleep(2)
+        self.Read(y)
+        self.read_all()
+        sleep(2)
+        self.Delete(x)
+        self.read_all()
+        sleep(2)
+        self.Read(x)
+        self.read_all()
         # 
         pass
 
@@ -41,7 +55,11 @@ class Client:
         reason = None
         max_version = None #datetime.datetime.strptime(all_version[0], "%Y-%m-%d %H:%M:%S.%f")
         index=None
-        if 'FILE ALREADY DELETED' in all_content:
+        # print(status)
+        # print(all_name)
+        # print(all_content)
+        # print(all_version)
+        if 'FILE ALREADY DELETED' in all_name:
             error = True
             reason = 'REASON: FILE ALREADY DELETED'
         elif 0 not in status:
@@ -60,8 +78,8 @@ class Client:
         else:
             print('***** READ SUCCESS *****')
             print(f'name: {all_name[index]}')
-            print(f'content: {all_content[i]}')
-            print(f'version: {all_version[i]}')
+            print(f'content: {all_content[index]}')
+            print(f'version: {all_version[index]}')
         pass
 
 
@@ -105,7 +123,36 @@ class Client:
         return file_uuid
         pass
 
-    def Delete(self):
+    def Delete(self, file_uuid):
+        delete_replicas=self.get_replicas('WRITE')
+        request=message.ReadDeleteRequest(uuid=file_uuid)
+        status = []
+        all_reason= []
+        for replica in delete_replicas:
+            channel = grpc.insecure_channel(str(replica))
+            read_stub = servicer.ReplicaStub(channel)
+            response = read_stub.Delete(request)
+            status.append(response.response)
+            all_reason.append(response.reason)
+
+        error=False
+        reason=None
+        if 'FILE ALREADY DELETED' in all_reason:
+            error=True
+            reason='FILE ALREADY DELETED'
+        elif 1 in status:
+            error=True
+            reason='FAILED TO DELETE'
+        else:
+            error=False
+        
+        if error:
+            print("***** DELETE FAILED *****")
+            print(f'REASON: {reason}')
+        else:
+            print("***** DELETE SUCCESS *****")
+            print(f'uuid: {file_uuid}')
+
         pass
 
     # READ, WRITE and DELETE
@@ -117,10 +164,22 @@ class Client:
         return list([msg.address for msg in response.serverList])
     
 
+    def read_all(self):
+        read_replicas=self.get_replicas('ALL')
+        print(f'{"="*10} ALL DATA {"="*10}')
+        for replica in read_replicas:
+            print(f'From Address: {replica}')
+            channel = grpc.insecure_channel(str(replica))
+            read_stub = servicer.ReplicaStub(channel)
+            response = read_stub.GetAllData(empty_pb2.Empty())
+            for data in response.readResponse:
+                print(data)
+        print(f'{"="*30}')
+
 
 def main():
     my_client=Client()
-    my_client.start()
+    my_client.run_test()
     return
 
 

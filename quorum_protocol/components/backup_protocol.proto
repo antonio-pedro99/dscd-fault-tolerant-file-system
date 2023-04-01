@@ -1,10 +1,12 @@
 syntax = "proto3";
 package backup_protocol;
+import "google/protobuf/empty.proto";
 
 service Replica{
     rpc Read(ReadDeleteRequest) returns (ReadResponse);
     rpc Write(WriteRequest) returns (WriteResponse);
     rpc Delete(ReadDeleteRequest) returns (Response);
+    rpc GetAllData(google.protobuf.Empty) returns (AllData);
 }
 
 service RegistryServer{
@@ -37,6 +39,10 @@ message ReadDeleteRequest{
     string uuid=1;
 }
 
+message AllData{
+    repeated ReadResponse readResponse = 1;
+}
+
 message ReadResponse{
     Status status=1;
     string name=2;
@@ -46,6 +52,7 @@ message ReadResponse{
 
 message Response{
     Status response=1;
+    string reason=2;
 }
 
 message FileDetail{
@@ -59,7 +66,7 @@ message FileList{
 
 // new added for quorun_protocol
 message RequestType{
-    string type = 1; 
+    string type = 1;
 }
 
 enum Status {

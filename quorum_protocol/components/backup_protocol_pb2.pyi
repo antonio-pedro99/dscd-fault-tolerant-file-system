@@ -1,3 +1,4 @@
+from google.protobuf import empty_pb2 as _empty_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -7,6 +8,12 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 FAIL: Status
 SUCCESS: Status
+
+class AllData(_message.Message):
+    __slots__ = ["readResponse"]
+    READRESPONSE_FIELD_NUMBER: _ClassVar[int]
+    readResponse: _containers.RepeatedCompositeFieldContainer[ReadResponse]
+    def __init__(self, readResponse: _Optional[_Iterable[_Union[ReadResponse, _Mapping]]] = ...) -> None: ...
 
 class FileDetail(_message.Message):
     __slots__ = ["file_name", "version"]
@@ -47,10 +54,12 @@ class RequestType(_message.Message):
     def __init__(self, type: _Optional[str] = ...) -> None: ...
 
 class Response(_message.Message):
-    __slots__ = ["response"]
+    __slots__ = ["reason", "response"]
+    REASON_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_FIELD_NUMBER: _ClassVar[int]
+    reason: str
     response: Status
-    def __init__(self, response: _Optional[_Union[Status, str]] = ...) -> None: ...
+    def __init__(self, response: _Optional[_Union[Status, str]] = ..., reason: _Optional[str] = ...) -> None: ...
 
 class ServerListResponse(_message.Message):
     __slots__ = ["serverList"]
