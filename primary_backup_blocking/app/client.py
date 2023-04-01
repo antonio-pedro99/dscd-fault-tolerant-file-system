@@ -4,27 +4,38 @@ import backup_protocol_pb2_grpc as servicer
 from concurrent import futures
 from google.protobuf import empty_pb2
 import uuid
+from typing import List
+import random
 
 class Client:
     def __init__(self) -> None:
         # TODO document why this method is empty
         self.registry_channel=grpc.insecure_channel('localhost:8888')
         self.registry_stub = servicer.RegistryServerStub(self.registry_channel)
+        self.replicas = self.__get_replicas__()
 
 
-    def get_replicas(self):
+    def __get_replicas__(self)-> List[message.ServerMessage]:
         print('----------------\nLIST OF AVAILABLE REPLICAS')
         try:
             response = self.registry_stub.GetReplicas(empty_pb2.Empty())
     
-            for replica in response.serverList:
-                print(f'{replica.uuid} {replica.address}')
+            return response.serverList
+        except Exception as e:
+            return e
+    
+    def write(self, replica:message.ServerMessage):
+        try:
+            replica_stub = servicer.ReplicaStub(channel = grpc.insecure_channel(replica.address) )
+            file_uuid = str(uuid.uuid4())
+            name = input("Enter the file name: ")
+            content = input("Enter the file content: ")
+            request = message.WriteRequest(name=name, uuid=file_uuid, content=content)
+            response = replica_stub.Write(request)
+            print(response)
         except Exception as e:
             print(e)
-    
-    def write(self):
-        # TODO document why this method is empty
-        pass
+
 
     def read(self):
         # TODO document why this method is empty
@@ -35,10 +46,32 @@ class Client:
         pass
 
 
+""" def show_replicas(client:Client):
+    for i, replica in enumerate(client.replicas):
+        print(f'{i+1}. {replica.uuid} {replica.address}') """
+
+def show_menu(client:Client):
+    while True:
+   
+        replica = random.choice(client.replicas)
+
+        print("\n---------MENU--------\n1. Read")
+        print("2. Write\n3. Exit\n")
+        try:
+            choice=int(input('Choose one option: '))
+            if(choice==1):
+                client.write(replica=replica)
+            elif(choice==2):
+                pass
+            elif(choice==3):
+                print("EXITING")
+                return
+        except ValueError:
+            print("[ERROR] Incorrect Input")
+
 def main():
     my_client=Client()
-    my_client.get_replicas()
-    #show_menu(my_client)
+    show_menu(my_client)
 
 if __name__=='__main__':
     main()
