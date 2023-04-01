@@ -55,38 +55,62 @@ class Replica(servicer.ReplicaServicer):
         print('REPLICA REGISTERED WITH ADDRESS: ',self.address)
 
 
-    def Read(self, request, context):
-        pass
-
     def Write(self, request, context):
         # handling the write request received from client
         filename=request.name
         content=request.content
         file_uuid=request.uuid
-        time = pd.Timestamp('now', tz='Asia/Kolkata').time()
-        # self.folder_lock.acquire()
+        time = tuple(str(pd.Timestamp('now', tz='Asia/Kolkata').to_pydatetime()).split('+'))[0]
+        self.folder_lock.acquire()
 
+        # try:
+
+        # deplicate file name is given
+        all_filenames=list(map(lambda x: x[0] , self.files.values()))
+        if (file_uuid not in self.files.keys()) and (filename in all_filenames):
+            self.folder_lock.release()
+            return message.WriteResponse(status='FAIL', 
+                                         uuid='FILE WITH THE SAME NAME ALREADY EXISTS', 
+                                         version=str(time))
+        
         # new file is been written
         if file_uuid not in self.files.keys():
-            response = self.write_new_file(filename, content, file_uuid, time)
-            # self.folder_lock.release()
+            response = self.write_file(filename, content, file_uuid, time)
+            self.folder_lock.release()
             return response
+            
+        # updating the existing file
+        if (file_uuid in self.files.keys()) and (filename in all_filenames):
+            response = self.write_file(filename, content, file_uuid, time)
+            self.folder_lock.release()
+            return response
+    
+        # trying to update deleted file
+        if (file_uuid in self.files.keys()) and (filename not in all_filenames):
+            self.folder_lock.release()
+            return message.WriteResponse(status='FAIL', 
+                                         uuid='DELETED FILE CANNOT BE UPDATED', 
+                                         version=str(time))
 
-    def write_new_file(self, filename, content, file_uuid, timestamp):
-        status='SUCCESS'
-        # try:
-        print("came here 2")
-        path = os.path.join(self.folder, f'{filename}.txt')
-        print(path)
-        file = open(path, 'w+')
-        file.write(content)
-        #file.close()
-        # self.files[file_uuid]=tuple(filename,timestamp)
         # except:
-        #     status='FAIL'
-        print("came here")
-        return message.WriteResponse(status=status, uuid=file_uuid, version=str("timestamp"))
+        #     print('[ERROR] in Writing')
 
+
+    def write_file(self, filename, content, file_uuid, timestamp):
+        status='SUCCESS'
+        try:
+            path = os.path.join(self.folder, f'{filename}.txt')
+            # print(path)
+            file = open(path, 'w+')
+            file.write(content)
+            file.close()
+            self.files[file_uuid]=tuple((filename,timestamp))
+        except:
+            status='FAIL'
+        return message.WriteResponse(status=status, uuid=file_uuid, version=str(timestamp))
+
+    def Read(self, request, context):
+        pass
 
     def Delete(self, request, context):
         pass
