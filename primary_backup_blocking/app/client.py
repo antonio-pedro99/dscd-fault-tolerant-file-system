@@ -46,10 +46,6 @@ class Client:
         pass
 
 
-""" def show_replicas(client:Client):
-    for i, replica in enumerate(client.replicas):
-        print(f'{i+1}. {replica.uuid} {replica.address}') """
-
 def show_menu(client:Client):
     while True:
    

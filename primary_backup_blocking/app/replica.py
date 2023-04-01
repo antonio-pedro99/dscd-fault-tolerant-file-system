@@ -27,6 +27,7 @@ class Replica(servicer.ReplicaServicer):
         self.data_store_map = {}
         self.replicas_lock = Lock()
         self.write_lock = Lock()
+        self.primary = {}
 
 
     def start(self):
@@ -52,6 +53,9 @@ class Replica(servicer.ReplicaServicer):
 
         if response.address == 'EMPTY':
             self.is_primary = True
+        
+        if self.is_primary == False:
+              self.primary["primary"] = message.ServerMessage(uuid=response.uuid, address=response.address)
 
         print('REPLICA REGISTERED WITH ADDRESS: ',self.address)
 
@@ -62,10 +66,9 @@ class Replica(servicer.ReplicaServicer):
         self.write_lock.acquire()
         print(f'WRITE REQUEST FOR FILE {request.uuid}: UUID')
         
-       
-        status = "SUCCESS"
-        file_name = f"{request.name}.txt"
-        file_path = self.folder.joinpath(file_name)
+        status = "FAILED"
+        print(self.primary)
+        file_path = self.folder.joinpath(f"{request.name}.txt")
         if request.uuid not in self.data_store_map.keys() and file_path.exists() == False:
             #new file
             with open(file_path.resolve(), "w") as f:
