@@ -110,7 +110,45 @@ class Replica(servicer.ReplicaServicer):
         return message.WriteResponse(status=status, uuid=file_uuid, version=str(timestamp))
 
     def Read(self, request, context):
+        file_uuid=request.uuid
+        self.folder_lock.acquire()
+
+        all_filenames=list(map(lambda x: x[0] , self.files.values()))
+        # read the file that is not present
+        if file_uuid not in self.files.keys():
+            self.folder_lock.release()
+            return message.ReadResponse(status='FAIL',name='FILE DOES NOT EXIST',
+                                        content='Null',version='Null')
+        
+        # read an existing file
+        if (file_uuid in self.files.keys()) and (self.files[file_uuid][0]!=None):
+            response=self.read_avalable_file(file_uuid)
+            self.folder_lock.release()
+            return response
+
+        # trying to read a file that is deleted
+        if (file_uuid in self.files.keys()) and (self.files[file_uuid][0]==None):
+            self.folder_lock.release()
+            return message.ReadResponse(status='FAIL',name='FILE ALREADY DELETED',
+                                        content='Null',version='Null')
+        
         pass
+
+    def read_avalable_file(self, uuid):
+        status='SUCCESS'
+        filename=self.files[uuid][0]
+        timestamp=self.files[uuid][1]
+        try:
+            path = os.path.join(self.folder, f'{filename}.txt')
+            # print(path)
+            file = open(path, 'r')
+            content = file.read()
+            file.close()
+        except:
+            status='FAIL'
+        return message.ReadResponse(status=status, name=filename, 
+                                    content=content, version=str(timestamp))
+
 
     def Delete(self, request, context):
         pass
