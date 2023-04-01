@@ -14,11 +14,13 @@ class Client:
 
     def get_replicas(self):
         print('----------------\nLIST OF AVAILABLE REPLICAS')
-        response = self.registry_stub.GetReplicas(empty_pb2.Empty())
+        try:
+            response = self.registry_stub.GetReplicas(empty_pb2.Empty())
     
-        for replica in response.serverList:
-            print(f'{replica.uuid} {replica.address}')
-        
+            for replica in response.serverList:
+                print(f'{replica.uuid} {replica.address}')
+        except Exception as e:
+            print(e)
     
     def write(self):
         # TODO document why this method is empty

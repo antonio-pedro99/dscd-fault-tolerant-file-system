@@ -77,17 +77,21 @@ class Replica(servicer.ReplicaServicer):
             response = self.write_new_file(filename, content, file_uuid, time)
             # self.folder_lock.release()
             return response
-        pass
 
     def write_new_file(self, filename, content, file_uuid, timestamp):
         status='SUCCESS'
         # try:
         print("came here 2")
-        file_path=os.path.join(self.folder,filename+".txt")
-        # print('\n',file_path)
-        file = open(file_path, 'w+')
-        file.write(content)
-        file.close()
+        path = os.path.join(self.folder, f'{filename}.txt')
+        print(path)
+        path = os.path.normpath(path)
+        print(path)
+        f = open(path.removesuffix("\\"), 'w')
+        #file_path=os.path.join(self.folder,f"{filename}.txt")
+        #print('\n',file_path)
+        #f = open(f"{self.folder}/t.txt", 'w+')
+        #file.write(content)
+        #file.close()
         # self.files[file_uuid]=tuple(filename,timestamp)
         # except:
         #     status='FAIL'
