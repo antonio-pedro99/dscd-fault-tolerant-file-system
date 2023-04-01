@@ -16,7 +16,7 @@ def start_replica():
     
 
 def main():
-    num_replca=5
+    num_replca=3
     process=[]
     try:
         registry = Process(target=start_registry)

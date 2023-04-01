@@ -58,6 +58,7 @@ class Replica(servicer.ReplicaServicer):
       
 
     def Read(self, request, context):
+        
         pass
 
     def Write(self, request: message.WriteRequest, context):
@@ -65,12 +66,11 @@ class Replica(servicer.ReplicaServicer):
         print(f'WRITE REQUEST FOR FILE {request.uuid}: UUID')
         response = message.WriteResponse()
         if self.is_primary:
-           self.HandleWrite(request = request, context = context)
+           response = self.BroadcastWrite(request = request, context = context)
         else:
             print("I am not the primary, I need to send it to the PR")
             stub = servicer.ReplicaStub(grpc.insecure_channel(self.primary))
-
-            response = stub.HandleWrite(message.WriteRequest(name = request.name, content = request.content, uuid = request.uuid))
+            response = stub.BroadcastWrite(message.WriteRequest(name = request.name, content = request.content, uuid = request.uuid))
         
         self.write_lock.release()
         return response
@@ -79,35 +79,43 @@ class Replica(servicer.ReplicaServicer):
     def Delete(self, request, context):
         pass
 
-    def HandleWrite(self, request, context):
+    # this is handing local write
+    def BroadcastWrite(self, request, context):
+        total_ack_received = -1
         print("RECEIVED FORWARD WRITE REQUEST")
 
-        response = self.__write__(request = request)
+        response = self.LocalWrite(request, context)
+        print(response.status)
+        if response.status==0:
+            total_ack_received+=1
 
         print("Voila, Now I will broadcast")
+        # here is the loop
         for _rep in self.replicas:
             stub = servicer.ReplicaStub(grpc.insecure_channel(_rep.address))
-            reply = stub.Write(message.WriteRequest(name=request.name, uuid = response.uuid, content=request.content))
-        
-        return response
+            reply = stub.LocalWrite(message.WriteRequest(name=request.name, uuid = request.uuid, content=request.content))
+            # print(reply.status) # remove later
+            if reply.status==0:
+                total_ack_received+=1
+            elif reply.status==1:
+                break
+        if total_ack_received == len(self.replicas):
+            return response
+        else:
+            return message.WriteResponse(status='FAIL', uuid='Null', version='Null')
+            
 
-
-    def __write__(self, request: message.WriteRequest)->message.WriteResponse:
-       
+    # here all the local writes are handled 
+    # check all the conditions for write
+    def LocalWrite(self, request, context):
         file_path = self.folder.joinpath(f"{request.name}.txt")
-        
         with open(file_path.resolve(), "w") as f:
                 f.write(request.content)
                 f.close()
                 self.data_store_map[request.uuid] = ctime(os.path.getctime(file_path.resolve()))
-        
         status = "SUCCESS"
-
-        #print("Version")
-        #print(self.data_store_map[request.uuid])
-        
         return message.WriteResponse(status=status, uuid=request.uuid, version=self.data_store_map[request.uuid])
-
+        pass
 
     def NotifyPrimary(self, request, context):
         self.replicas_lock.acquire()

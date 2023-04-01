@@ -6,7 +6,8 @@ service Replica{
     rpc Read(ReadDeleteRequest) returns (ReadResponse);
     rpc Write(WriteRequest) returns (WriteResponse);
     rpc Delete(ReadDeleteRequest) returns (Response);
-    rpc HandleWrite(WriteRequest) returns (WriteResponse);
+    rpc BroadcastWrite(WriteRequest) returns (WriteResponse);
+    rpc LocalWrite(WriteRequest) returns (WriteResponse);
     rpc NotifyPrimary(ServerMessage) returns  (google.protobuf.Empty);
 }
 

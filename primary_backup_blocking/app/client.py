@@ -36,7 +36,7 @@ class Client:
       
 
 
-    def read(self):
+    def read(self,replica:message.ServerMessage):
         # TODO document why this method is empty
         pass
 
@@ -50,14 +50,14 @@ def show_menu(client:Client):
    
         replica = random.choice(client.replicas)
 
-        print("\n---------MENU--------\n1. Read")
-        print("2. Write\n3. Exit\n")
+        print("\n---------MENU--------\n1. Write")
+        print("2. Read\n3. Exit\n")
         try:
             choice=int(input('Choose one option: '))
             if(choice==1):
                 client.write(replica=replica)
             elif(choice==2):
-                pass
+                client.read(replica=replica)
             elif(choice==3):
                 print("EXITING")
                 return

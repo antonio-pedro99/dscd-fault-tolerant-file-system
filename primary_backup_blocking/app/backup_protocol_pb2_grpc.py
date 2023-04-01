@@ -30,8 +30,13 @@ class ReplicaStub(object):
                 request_serializer=backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
                 response_deserializer=backup__protocol__pb2.Response.FromString,
                 )
-        self.HandleWrite = channel.unary_unary(
-                '/backup_protocol.Replica/HandleWrite',
+        self.BroadcastWrite = channel.unary_unary(
+                '/backup_protocol.Replica/BroadcastWrite',
+                request_serializer=backup__protocol__pb2.WriteRequest.SerializeToString,
+                response_deserializer=backup__protocol__pb2.WriteResponse.FromString,
+                )
+        self.LocalWrite = channel.unary_unary(
+                '/backup_protocol.Replica/LocalWrite',
                 request_serializer=backup__protocol__pb2.WriteRequest.SerializeToString,
                 response_deserializer=backup__protocol__pb2.WriteResponse.FromString,
                 )
@@ -63,7 +68,13 @@ class ReplicaServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def HandleWrite(self, request, context):
+    def BroadcastWrite(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def LocalWrite(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -93,8 +104,13 @@ def add_ReplicaServicer_to_server(servicer, server):
                     request_deserializer=backup__protocol__pb2.ReadDeleteRequest.FromString,
                     response_serializer=backup__protocol__pb2.Response.SerializeToString,
             ),
-            'HandleWrite': grpc.unary_unary_rpc_method_handler(
-                    servicer.HandleWrite,
+            'BroadcastWrite': grpc.unary_unary_rpc_method_handler(
+                    servicer.BroadcastWrite,
+                    request_deserializer=backup__protocol__pb2.WriteRequest.FromString,
+                    response_serializer=backup__protocol__pb2.WriteResponse.SerializeToString,
+            ),
+            'LocalWrite': grpc.unary_unary_rpc_method_handler(
+                    servicer.LocalWrite,
                     request_deserializer=backup__protocol__pb2.WriteRequest.FromString,
                     response_serializer=backup__protocol__pb2.WriteResponse.SerializeToString,
             ),
@@ -165,7 +181,7 @@ class Replica(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def HandleWrite(request,
+    def BroadcastWrite(request,
             target,
             options=(),
             channel_credentials=None,
@@ -175,7 +191,24 @@ class Replica(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/HandleWrite',
+        return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/BroadcastWrite',
+            backup__protocol__pb2.WriteRequest.SerializeToString,
+            backup__protocol__pb2.WriteResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def LocalWrite(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/LocalWrite',
             backup__protocol__pb2.WriteRequest.SerializeToString,
             backup__protocol__pb2.WriteResponse.FromString,
             options, channel_credentials,
