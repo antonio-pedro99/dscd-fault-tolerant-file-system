@@ -223,7 +223,7 @@ def main():
     except KeyboardInterrupt:
         print('-----CLOSING REPLICA------')
         replica.stop()
-        return;
+        return
 
 if __name__=='__main__':
     main() 
