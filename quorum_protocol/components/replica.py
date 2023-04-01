@@ -131,13 +131,13 @@ class Replica(servicer.ReplicaServicer):
             self.folder_lock.release()
             return message.ReadResponse(status='FAIL',name='FILE ALREADY DELETED',
                                         content='Null',version='Null')
-        
         pass
 
-    def read_avalable_file(self, uuid):
+
+    def read_avalable_file(self,file_uuid):
         status='SUCCESS'
-        filename=self.files[uuid][0]
-        timestamp=self.files[uuid][1]
+        filename=self.files[file_uuid][0]
+        timestamp=self.files[file_uuid][1]
         try:
             path = os.path.join(self.folder, f'{filename}.txt')
             # print(path)
@@ -151,8 +151,41 @@ class Replica(servicer.ReplicaServicer):
 
 
     def Delete(self, request, context):
+        file_uuid=request.uuid
+        self.folder_lock.acquire()
+        timestamp = tuple(str(pd.Timestamp('now', tz='Asia/Kolkata').to_pydatetime()).split('+'))[0]
+
+        # file is not present in the in memory map
+        if file_uuid not in self.files.keys():
+            self.files[file_uuid]=tuple((None, timestamp))
+            self.folder_lock.release()
+            return message.Response(response='SUCCESS', reason='SUCCESS')
+
+        # file exist in the filesystem
+        if (file_uuid in self.files.keys()) and (self.files[file_uuid][0]!=None):
+            response = self.delete_available_file(file_uuid,timestamp)
+            self.folder_lock.release()
+            return response
+        
+        if (file_uuid in self.files.keys()) and (self.files[file_uuid][0]==None):
+            self.folder_lock.release()
+            return message.Response(response='FAIL', reason='FILE ALREADY DELETED')
+
         pass
 
+    def delete_available_file(self, file_uuid, timestamp):
+        status='SUCCESS'
+        reason='SUCCESS'
+        filename=self.files[file_uuid][0]
+        try:
+            path = os.path.join(self.folder, f'{filename}.txt')
+            # print(path)
+            os.remove(path)
+            self.files[file_uuid]=tuple((None, timestamp))
+        except:
+            status='FAIL'
+            reason='FAILED TO DELETE'
+        return message.Response(response=status, reason=reason)
 
 
 def main(address=None):

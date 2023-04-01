@@ -10,7 +10,7 @@ from multiprocessing import Process
 
 def start_registry():
     my_registry=RegistryServer()
-    my_registry.start(1,1,1)
+    my_registry.start(5,3,3)
 
 def start_replica():
     # my_replica=Replica()
@@ -19,7 +19,7 @@ def start_replica():
     
 
 def main():
-    num_replca=1
+    num_replca=5
     process=[]
     try:
         registry = Process(target=start_registry)

@@ -47,10 +47,12 @@ class RequestType(_message.Message):
     def __init__(self, type: _Optional[str] = ...) -> None: ...
 
 class Response(_message.Message):
-    __slots__ = ["response"]
+    __slots__ = ["reason", "response"]
+    REASON_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_FIELD_NUMBER: _ClassVar[int]
+    reason: str
     response: Status
-    def __init__(self, response: _Optional[_Union[Status, str]] = ...) -> None: ...
+    def __init__(self, response: _Optional[_Union[Status, str]] = ..., reason: _Optional[str] = ...) -> None: ...
 
 class ServerListResponse(_message.Message):
     __slots__ = ["serverList"]

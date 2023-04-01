@@ -6,7 +6,7 @@ import uuid
 from concurrent import futures
 from threading import Lock
 import datetime
-
+from time import sleep
 
 class Client:
 
@@ -15,9 +15,17 @@ class Client:
         pass
 
     def start(self):
-        x = self.Write('ads','plant') # create new file
+        x = self.Write('file1','THIS IS FILE 1') # create new file
+        sleep(2)
         self.Read(x) # create new file with existing name
-        # self.Write('ads','Alien', x) # update existing file
+        sleep(2)
+        y = self.Write('file2','THIS IS FILE 2') # update existing file
+        sleep(2)
+        self.Read(y)
+        sleep(2)
+        self.Delete(x)
+        sleep(2)
+        self.Read(x)
         # 
         pass
 
@@ -41,7 +49,11 @@ class Client:
         reason = None
         max_version = None #datetime.datetime.strptime(all_version[0], "%Y-%m-%d %H:%M:%S.%f")
         index=None
-        if 'FILE ALREADY DELETED' in all_content:
+        # print(status)
+        # print(all_name)
+        # print(all_content)
+        # print(all_version)
+        if 'FILE ALREADY DELETED' in all_name:
             error = True
             reason = 'REASON: FILE ALREADY DELETED'
         elif 0 not in status:
@@ -60,8 +72,8 @@ class Client:
         else:
             print('***** READ SUCCESS *****')
             print(f'name: {all_name[index]}')
-            print(f'content: {all_content[i]}')
-            print(f'version: {all_version[i]}')
+            print(f'content: {all_content[index]}')
+            print(f'version: {all_version[index]}')
         pass
 
 
@@ -105,7 +117,35 @@ class Client:
         return file_uuid
         pass
 
-    def Delete(self):
+    def Delete(self, file_uuid):
+        delete_replicas=self.get_replicas('WRITE')
+        request=message.ReadDeleteRequest(uuid=file_uuid)
+        status = []
+        all_reason= []
+        for replica in delete_replicas:
+            channel = grpc.insecure_channel(str(replica))
+            read_stub = servicer.ReplicaStub(channel)
+            response = read_stub.Delete(request)
+            status.append(response.response)
+            all_reason.append(response.reason)
+
+        error=False
+        reason=None
+        if 'FILE ALREADY DELETED' in all_reason:
+            error=True
+            reason='FILE ALREADY DELETED'
+        elif 1 in status:
+            error=True
+            reason='FAILED TO DELETE'
+        else:
+            error=False
+        
+        if error:
+            print("***** DELETE FAILED *****")
+            print(f'REASON: {reason}')
+        else:
+            print("***** DELETE SUCCESS *****")
+
         pass
 
     # READ, WRITE and DELETE

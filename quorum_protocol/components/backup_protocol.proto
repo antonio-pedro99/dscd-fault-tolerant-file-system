@@ -46,6 +46,7 @@ message ReadResponse{
 
 message Response{
     Status response=1;
+    string reason=2;
 }
 
 message FileDetail{
@@ -59,7 +60,7 @@ message FileList{
 
 // new added for quorun_protocol
 message RequestType{
-    string type = 1; 
+    string type = 1;
 }
 
 enum Status {
