@@ -16,13 +16,54 @@ class Client:
 
     def start(self):
         x = self.Write('ads','plant') # create new file
-        self.Write('ads','Hello') # create new file with existing name
+        self.Read(x) # create new file with existing name
         # self.Write('ads','Alien', x) # update existing file
         # 
         pass
 
-    def Read(self):
+    def Read(self, file_uuid):
+        read_replicas=self.get_replicas('READ')
+        request=message.ReadDeleteRequest(uuid=file_uuid)
+        status = []
+        all_name = []
+        all_version = []
+        all_content=[]
+        for replica in read_replicas:
+            channel = grpc.insecure_channel(str(replica))
+            read_stub = servicer.ReplicaStub(channel)
+            response = read_stub.Read(request)
+            status.append(response.status)
+            all_name.append(response.name)
+            all_content.append(response.content)
+            all_version.append(response.version)
+
+        error = False
+        reason = None
+        max_version = None #datetime.datetime.strptime(all_version[0], "%Y-%m-%d %H:%M:%S.%f")
+        index=None
+        if 'FILE ALREADY DELETED' in all_content:
+            error = True
+            reason = 'REASON: FILE ALREADY DELETED'
+        elif 0 not in status:
+            error = True
+            reason = 'REASON: FILE DOES NOT EXIST'
+        else:
+            for i in range(len(all_version)):
+                if(status[i]==0):
+                    current = datetime.datetime.strptime(all_version[i], "%Y-%m-%d %H:%M:%S.%f")
+                    if max_version == None or current > max_version:
+                        max_version = current
+                        index = i
+        if error:
+            print('***** READ FAILED *****')
+            print(reason)
+        else:
+            print('***** READ SUCCESS *****')
+            print(f'name: {all_name[index]}')
+            print(f'content: {all_content[i]}')
+            print(f'version: {all_version[i]}')
         pass
+
 
     def Write(self, name, text, file_uuid=None):
         write_replicas=self.get_replicas('WRITE')
@@ -60,6 +101,8 @@ class Client:
             print("***** WRITE SUCCESS *****")
             print(f'uuid: {file_uuid}')
             print(f'version: {max_version}')
+        # returning for testing purpose
+        return file_uuid
         pass
 
     def Delete(self):
