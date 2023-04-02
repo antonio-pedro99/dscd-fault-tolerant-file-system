@@ -47,6 +47,21 @@ class Client:
         response = replica_stub.Delete(request)
         print(response)
 
+    def read_all(self, file_uuid):
+        if file_uuid!='': # read uuid from every replica
+            request=message.ReadDeleteRequest(uuid=file_uuid)
+        else:  # real all data from all the replicas
+            request=message.ReadDeleteRequest(uuid='Null')
+        read_replicas=list(map(lambda x: x.address, self.replicas))
+        print(f'{"="*10} ALL DATA {"="*10}')
+        for replica in read_replicas:
+            print(f'From Address: {replica}')
+            channel = grpc.insecure_channel(str(replica))
+            read_stub = servicer.ReplicaStub(channel)
+            response = read_stub.GetAllData(request)
+            for data in response.readResponseList:
+                print(data)
+        print(f'{"="*30}')
 
 def show_menu(client:Client):
     while True:
@@ -54,7 +69,7 @@ def show_menu(client:Client):
         replica = random.choice(client.replicas)
 
         print("\n---------MENU--------\n1. Write")
-        print("2. Read\n3. Delete\n4. Exit\n")
+        print("2. Read\n3. Delete\n4. Real All\n5. Exit\n")
         try:
             choice=int(input('Choose one option: '))
             if(choice==1):
@@ -72,6 +87,9 @@ def show_menu(client:Client):
                 file_uuid=input("Enter the uuid of file: ")
                 client.delete(file_uuid = file_uuid, replica=replica)
             elif(choice==4):
+                file_uuid=input("Enter the UUID[Optional]: ")
+                client.read_all(file_uuid)
+            elif(choice==5):
                 print("EXITING")
                 return
         except ValueError:

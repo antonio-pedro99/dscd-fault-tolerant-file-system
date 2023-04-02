@@ -261,6 +261,20 @@ class Replica(servicer.ReplicaServicer):
         print(f"NEW REPLICA {request.address} [ADDRESS] JOINED")  
         self.replicas_lock.release()
         return empty_pb2.Empty()
+    
+    def GetAllData(self, request, context):
+        data_to_send=message.ReadResponseList()
+        if request.uuid=='Null':
+            for file_uuid in self.data_store_map.keys():
+                data_to_send.readResponseList.append(
+                    self.Read(message.ReadDeleteRequest(uuid=file_uuid) , context)
+                )
+        else:
+            data_to_send.readResponseList.append(
+                    self.Read(message.ReadDeleteRequest(uuid=request.uuid) , context)
+                )
+        return data_to_send
+        pass
 
 def main():
     address = 'localhost:'+str(get_new_port())

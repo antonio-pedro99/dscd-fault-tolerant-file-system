@@ -11,6 +11,7 @@ service Replica{
     rpc BroadcastWrite(WriteRequest) returns (WriteResponse);
     rpc LocalWrite(WriteRequest) returns (WriteResponse);
     rpc NotifyPrimary(ServerMessage) returns  (google.protobuf.Empty);
+    rpc GetAllData(ReadDeleteRequest) returns (ReadResponseList);
 }
 
 service RegistryServer{
@@ -42,6 +43,10 @@ message WriteResponse {
 
 message ReadDeleteRequest{
     string uuid=1;
+}
+
+message ReadResponseList{
+    repeated ReadResponse readResponseList = 1;
 }
 
 message ReadResponse{

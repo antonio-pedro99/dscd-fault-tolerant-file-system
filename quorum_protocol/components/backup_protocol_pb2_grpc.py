@@ -3,7 +3,6 @@
 import grpc
 
 import backup_protocol_pb2 as backup__protocol__pb2
-from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
 class ReplicaStub(object):
@@ -32,7 +31,7 @@ class ReplicaStub(object):
                 )
         self.GetAllData = channel.unary_unary(
                 '/backup_protocol.Replica/GetAllData',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                request_serializer=backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
                 response_deserializer=backup__protocol__pb2.AllData.FromString,
                 )
 
@@ -84,7 +83,7 @@ def add_ReplicaServicer_to_server(servicer, server):
             ),
             'GetAllData': grpc.unary_unary_rpc_method_handler(
                     servicer.GetAllData,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    request_deserializer=backup__protocol__pb2.ReadDeleteRequest.FromString,
                     response_serializer=backup__protocol__pb2.AllData.SerializeToString,
             ),
     }
@@ -160,7 +159,7 @@ class Replica(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/backup_protocol.Replica/GetAllData',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            backup__protocol__pb2.ReadDeleteRequest.SerializeToString,
             backup__protocol__pb2.AllData.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

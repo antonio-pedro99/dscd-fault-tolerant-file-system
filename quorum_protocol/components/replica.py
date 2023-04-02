@@ -189,10 +189,15 @@ class Replica(servicer.ReplicaServicer):
     
     def GetAllData(self, request, context):
         data_to_send=message.AllData()
-        for file_uuid in self.files.keys():
+        if request.uuid=='Null':
+            for file_uuid in self.files.keys():
+                data_to_send.readResponse.append(
+                    self.Read(message.ReadDeleteRequest(uuid=file_uuid) , context)
+                )
+        else:
             data_to_send.readResponse.append(
-                self.Read(message.ReadDeleteRequest(uuid=file_uuid) , context)
-            )
+                    self.Read(message.ReadDeleteRequest(uuid=request.uuid) , context)
+                )
         return data_to_send
         pass
 

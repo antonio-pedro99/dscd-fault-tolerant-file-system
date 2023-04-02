@@ -43,6 +43,12 @@ class ReadResponse(_message.Message):
     version: str
     def __init__(self, status: _Optional[_Union[Status, str]] = ..., name: _Optional[str] = ..., content: _Optional[str] = ..., version: _Optional[str] = ..., details: _Optional[str] = ...) -> None: ...
 
+class ReadResponseList(_message.Message):
+    __slots__ = ["readResponseList"]
+    READRESPONSELIST_FIELD_NUMBER: _ClassVar[int]
+    readResponseList: _containers.RepeatedCompositeFieldContainer[ReadResponse]
+    def __init__(self, readResponseList: _Optional[_Iterable[_Union[ReadResponse, _Mapping]]] = ...) -> None: ...
+
 class Response(_message.Message):
     __slots__ = ["reason", "response"]
     REASON_FIELD_NUMBER: _ClassVar[int]
