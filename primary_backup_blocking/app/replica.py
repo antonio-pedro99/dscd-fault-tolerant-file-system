@@ -106,12 +106,12 @@ class Replica(servicer.ReplicaServicer):
 
     def Delete(self, request, context):
         self.write_lock.acquire()
-        print(f'DELETE REQUEST FOR FILE {request.uuid}: UUID')
+        print(f'DELETE REQUEST FOR FILE {request.uuid}: UUID at [REPLICA]{self.address}')
         response = None
         if self.is_primary:
             response = self.BroadcastDelete(request=request, context=context)
         else:
-            print(f"REDIRECTING DELETE TO PR[{self.primary}]")
+            print(f"REDIRECTING DELETE TO PR[{self.primary}] at [REPLICA]{self.address}'")
             stub = servicer.ReplicaStub(grpc.insecure_channel(self.primary))
             response = stub.BroadcastDelete(message.ReadDeleteRequest(uuid = request.uuid))
         self.write_lock.release()
@@ -123,13 +123,14 @@ class Replica(servicer.ReplicaServicer):
         print("RECEIVED FORWARDED DELETE REQUEST")
 
         reason=None
-        # response = self.LocalDelete(request, context)
-        # print(response.response)
-        # if response.response==0:
-        #     total_ack_received+=1
-        # else:
-        #     reason=response.reason
-        print(self.replicas)
+        response = self.LocalDelete(request, context)
+        print(response.response)
+        if response.response==0:
+            total_ack_received+=1
+        else:
+            reason=response.reason
+
+        #print(self.replicas)
 
         # here is the loop
         for _rep in self.replicas:
@@ -172,12 +173,15 @@ class Replica(servicer.ReplicaServicer):
         if  file_path.exists() == True:
             # try:
             # os.remove(file_path.resolve())
+            
             print(f'Removing {file_path.resolve()}')
-            print(f'Address: {self.address}')
-            self.data_store_map[file_uuid]=tuple((None, ctime(os.path.getctime(file_path.resolve()))))
-            # except:
-            #     status='FAIL'
-            #     reason='FAILED TO DELETE'
+            try:
+                file_path.unlink(missing_ok=True)
+            
+                print(f'Address: {self.address}')
+                self.data_store_map[file_uuid]=tuple((None, ctime(os.path.getctime(file_path.resolve()))))
+            except FileNotFoundError as e:
+                pass
             return message.Response(response=status, reason=reason)
         else:
             status = 'FAIL'
