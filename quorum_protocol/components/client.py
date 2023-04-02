@@ -1,19 +1,16 @@
 import grpc
 import backup_protocol_pb2 as message
 import backup_protocol_pb2_grpc as servicer
-from port import get_new_port
 import uuid
-from concurrent import futures
-from threading import Lock
 import datetime
 from time import sleep
 from google.protobuf import empty_pb2
+import random
 
 class Client:
 
     def __init__(self) -> None:
         self.registry_channel=grpc.insecure_channel('localhost:50001')
-        pass
 
     def run_test(self):
         x = self.Write('file1','THIS IS FILE 1') # create new file
@@ -99,13 +96,11 @@ class Client:
             status.append(response.status)
             all_uuid.append(response.uuid)
             version.append(response.version)
-            # print(response)
-            # date_object = datetime.datetime.strptime(response.version, "%Y-%m-%d %H:%M:%S.%f")
-            # print(type(date_object))
+          
         error = False
         reason = None
         max_version =datetime.datetime.strptime(version[0], "%Y-%m-%d %H:%M:%S.%f")
-        # print(status)
+     
         for i in range(len(status)):
             if status[i]==1:
                 error = True
@@ -121,7 +116,6 @@ class Client:
             print(f'version: {max_version}')
         # returning for testing purpose
         return file_uuid
-        pass
 
     def Delete(self, file_uuid):
         delete_replicas=self.get_replicas('WRITE')
@@ -153,7 +147,6 @@ class Client:
             print("***** DELETE SUCCESS *****")
             print(f'uuid: {file_uuid}')
 
-        pass
 
     # READ, WRITE and DELETE
     def get_replicas(self, type):
@@ -177,11 +170,37 @@ class Client:
         print(f'{"="*30}')
 
 
+def show_menu(client:Client):
+    while True:
+   
+        #lient.get_replicas("ALL")
+
+        print("\n---------MENU--------\n1. Write")
+        print("2. Read\n3. Delete\n4. Exit\n")
+        try:
+            choice=int(input('Choose one option: '))
+            if(choice==1):
+                file_uuid = input("Enter the UUID[Optional]: ")
+                name = input("Enter the file name: ")
+                content = input("Enter the file content: ")
+                if file_uuid != "":
+                    client.Write(name = name, text = content, file_uuid = file_uuid)
+                else:
+                    client.Write(name = name, text = content)
+            elif(choice==2):
+                file_uuid=input("Enter the uuid of file: ")
+                client.Read(file_uuid = file_uuid)
+            elif(choice==3):
+                file_uuid=input("Enter the uuid of file: ")
+                client.Delete(file_uuid = file_uuid)
+            elif(choice==4):
+                print("EXITING")
+                return
+        except ValueError:
+            print("[ERROR] Incorrect Input")
 def main():
     my_client=Client()
-    my_client.run_test()
-    return
-
+    show_menu(my_client)
 
 if __name__=='__main__':
     main()

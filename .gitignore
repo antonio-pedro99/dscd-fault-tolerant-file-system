@@ -4,6 +4,7 @@
 /primary_backup_blocking/app/db/
 /primary_backup_blocking/__pycache__/
 /primary_backup_blocking/__pycache__
+/quorum_protocol/components/database/
 *.pdf
 __pycache__
 *storage

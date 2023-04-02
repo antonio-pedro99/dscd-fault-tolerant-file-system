@@ -8,7 +8,7 @@ import shutil
 from time import ctime
 import uuid
 from concurrent import futures
-from threading import Lock
+from threading import Lock, Thread
 from pathlib import Path
 
 ROOT_DIR = Path.cwd()
@@ -119,36 +119,26 @@ class Replica(servicer.ReplicaServicer):
 
 
     def BroadcastDelete(self, request, context):
-        total_ack_received = -1
         print("RECEIVED FORWARDED DELETE REQUEST")
 
-        reason=None
         response = self.LocalDelete(request, context)
-        print(response.response)
+      
         if response.response==0:
-            total_ack_received+=1
-        else:
-            reason=response.reason
+            Thread(target = self.BroadcastDeleteHelper, args = (request, )).start()
+        return response
 
-        #print(self.replicas)
 
-        # here is the loop
+    def BroadcastDeleteHelper(self, request):
+        error_response = None
         for _rep in self.replicas:
             print(f"BROADCASTING UPDATE TO [{_rep.address}]")
             stub = servicer.ReplicaStub(grpc.insecure_channel(_rep.address))
             reply = stub.LocalDelete(message.ReadDeleteRequest(uuid = request.uuid))
             print(reply.response) # remove later
-            if reply.response==0:
-                total_ack_received+=1
-            elif reply.response==1:
-                reason=reply.reason
-                break
-        if total_ack_received == len(self.replicas):
-            return response
-        else:
-            return message.Response(response='FAIL', reason=reason)
-        
-
+            if reply.response == 1 and error_response == None:
+               error_response = reply
+        return error_response
+    
 
     # this is local delete
     # handle all the conditions here
@@ -188,33 +178,26 @@ class Replica(servicer.ReplicaServicer):
 
     # this is handing local write
     def BroadcastWrite(self, request, context):
-        total_ack_received = -1
         print("RECEIVED FORWARD WRITE REQUEST")
 
         response = self.LocalWrite(request, context)
-        print(response.status)
-        if response.status==0:
-            total_ack_received+=1
 
-    
-        # here is the loop
-        error_reply=None
+        if response.status == 0:
+            Thread(target = self.BroadcastWriteHelper, args = (request,)).start()
+        return response
+          
+            
+    def BroadcastWriteHelper(self, request:message.WriteRequest):
+        error_response = None
         for _rep in self.replicas:
             print(f"BROADCASTING UPDATE TO [{_rep.address}]")
             stub = servicer.ReplicaStub(grpc.insecure_channel(_rep.address))
             reply = stub.LocalWrite(message.WriteRequest(name=request.name, uuid = request.uuid, content=request.content))
-            # print(reply.status) # remove later
-            if reply.status==0:
-                total_ack_received+=1
-            elif reply.status==1:
-                error_reply=reply
-                break
-        if total_ack_received == len(self.replicas):
-            return response
-        else:
-            return error_reply
-            
-
+            if error_response == None and reply.status == 1:
+                error_response = reply
+        return error_response
+    
+    
     # here all the local writes are handled 
     # check all the conditions for write
     def LocalWrite(self, request:message.WriteRequest, context):
