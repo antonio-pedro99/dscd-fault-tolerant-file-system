@@ -123,12 +123,13 @@ class Replica(servicer.ReplicaServicer):
         print("RECEIVED FORWARDED DELETE REQUEST")
 
         reason=None
-        response = self.LocalDelete(request, context)
-        print(response.response)
-        if response.response==0:
-            total_ack_received+=1
-        else:
-            reason=response.reason
+        # response = self.LocalDelete(request, context)
+        # print(response.response)
+        # if response.response==0:
+        #     total_ack_received+=1
+        # else:
+        #     reason=response.reason
+        print(self.replicas)
 
         # here is the loop
         for _rep in self.replicas:
@@ -170,7 +171,9 @@ class Replica(servicer.ReplicaServicer):
         # file is in local map and present in the folder 
         if  file_path.exists() == True:
             # try:
-            os.remove(file_path.resolve())
+            # os.remove(file_path.resolve())
+            print(f'Removing {file_path.resolve()}')
+            print(f'Address: {self.address}')
             self.data_store_map[file_uuid]=tuple((None, ctime(os.path.getctime(file_path.resolve()))))
             # except:
             #     status='FAIL'
@@ -193,6 +196,7 @@ class Replica(servicer.ReplicaServicer):
 
     
         # here is the loop
+        error_reply=None
         for _rep in self.replicas:
             print(f"BROADCASTING UPDATE TO [{_rep.address}]")
             stub = servicer.ReplicaStub(grpc.insecure_channel(_rep.address))
@@ -201,11 +205,12 @@ class Replica(servicer.ReplicaServicer):
             if reply.status==0:
                 total_ack_received+=1
             elif reply.status==1:
+                error_reply=reply
                 break
         if total_ack_received == len(self.replicas):
             return response
         else:
-            return message.WriteResponse(status='FAIL', uuid='Null', version='Null')
+            return error_reply
             
 
     # here all the local writes are handled 
