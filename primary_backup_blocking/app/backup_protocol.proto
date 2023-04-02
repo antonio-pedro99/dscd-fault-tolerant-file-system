@@ -37,6 +37,7 @@ message WriteResponse {
     Status status = 1;
     string uuid  = 2;
     string version = 3;
+    string message = 4;
 }
 
 message ReadDeleteRequest{
@@ -48,6 +49,7 @@ message ReadResponse{
     string name=2;
     string content=3;
     string version=4;
+    string details=5;
 }
 
 message Response{

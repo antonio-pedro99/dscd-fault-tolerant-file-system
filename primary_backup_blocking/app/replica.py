@@ -42,7 +42,6 @@ class Replica(servicer.ReplicaServicer):
             print("[ERROR] Creating replica folder")
             print(e)
 
-
     def RegisterReplica(self):
         register_replica_stub = servicer.RegistryServerStub(self.registry_channel)
         response = register_replica_stub.RegisterReplica(
@@ -53,29 +52,41 @@ class Replica(servicer.ReplicaServicer):
             self.is_primary = True
         
         self.primary = response.address
-        print(self.primary)  
         print('REPLICA REGISTERED WITH ADDRESS: ',self.address)
       
 
     def Read(self, request, context):
         file_uuid=request.uuid
-
+        status ='SUCCESS'
+        detail ='Operation completed successfully'
         # the uuid is present in map and file is also present (not none)
         if (file_uuid in self.data_store_map.keys()) and self.data_store_map[file_uuid]!=None:
-            status='SUCCESS'
             filename=self.data_store_map[file_uuid][0]
             timestamp=self.data_store_map[file_uuid][1]
             content = None
             try:
-                #path = os.path.join(self.folder, f'{filename}')
                 file_path = self.folder.joinpath(filename)
-                file = open(file_path, 'r')
-                content = file.read()
-                file.close()
-            except:
-                status='FAIL'
-            return message.ReadResponse(status=status, name=filename, 
-                                        content=content, version=timestamp)         
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    f.close()
+            except IOError as e:
+                status ='FAIL'
+                detail = "UNKNOWN"
+            return message.ReadResponse(status=status, name=filename, content=content, details = detail)
+        #file does not exists
+        elif file_uuid not in self.data_store_map.keys():
+            status = "FAIL"
+            detail = "FILE DOES NOT EXIST"
+            return message.ReadResponse(status=status, name=None, 
+                                        content=None, version=None, details=detail)    
+        elif file_uuid in self.data_store_map.keys():
+            file_path = self.folder.joinpath(self.data_store_map[file_uuid][0])
+            timestamp = self.data_store_map[file_uuid][1]
+            if file_path.exists() == False:
+                status = "FAIL"
+                detail = "FILE ALREADY DELETED"
+                return message.ReadResponse(status=status, name=None, 
+                                        content=None, version=timestamp, details=detail) 
 
 
     def Write(self, request: message.WriteRequest, context):
@@ -85,7 +96,7 @@ class Replica(servicer.ReplicaServicer):
         if self.is_primary:
            response = self.BroadcastWrite(request = request, context = context)
         else:
-            print("I am not the primary, I need to send it to the PR")
+            print(f"REDIRECTING WRITE TO PR[{self.primary}]")
             stub = servicer.ReplicaStub(grpc.insecure_channel(self.primary))
             response = stub.BroadcastWrite(message.WriteRequest(name = request.name, content = request.content, uuid = request.uuid))
         
@@ -100,7 +111,7 @@ class Replica(servicer.ReplicaServicer):
         if self.is_primary:
             response = self.BroadcastDelete(request=request, context=context)
         else:
-            print("I am not the primary, I need to send it to the PR")
+            print(f"REDIRECTING DELETE TO PR[{self.primary}]")
             stub = servicer.ReplicaStub(grpc.insecure_channel(self.primary))
             response = stub.BroadcastDelete(message.ReadDeleteRequest(uuid = request.uuid))
         self.write_lock.release()
@@ -109,7 +120,7 @@ class Replica(servicer.ReplicaServicer):
 
     def BroadcastDelete(self, request, context):
         total_ack_received = -1
-        print("RECEIVED FORWARD DELETE REQUEST")
+        print("RECEIVED FORWARDED DELETE REQUEST")
 
         reason=None
         response = self.LocalDelete(request, context)
@@ -119,9 +130,9 @@ class Replica(servicer.ReplicaServicer):
         else:
             reason=response.reason
 
-        print("Voila, Now I will broadcast")
         # here is the loop
         for _rep in self.replicas:
+            print(f"BROADCASTING UPDATE TO [{_rep.address}]")
             stub = servicer.ReplicaStub(grpc.insecure_channel(_rep.address))
             reply = stub.LocalDelete(message.ReadDeleteRequest(uuid = request.uuid))
             print(reply.response) # remove later
@@ -138,26 +149,37 @@ class Replica(servicer.ReplicaServicer):
 
 
     # this is local delete
-    # handle all the consitions here
-    def LocalDelete(self, request, context):
+    # handle all the conditions here
+    def LocalDelete(self, request:message.ReadDeleteRequest, context):
         file_uuid=request.uuid
+        uuids = self.data_store_map.keys()
 
+
+        if file_uuid not in uuids:
+            status = 'FAIL'
+            reason = 'FILE DOES NOT EXIST'
+            return message.Response(response=status, reason=reason)
+
+        fila_name = self.data_store_map[file_uuid][0]
+        file_path = self.folder.joinpath(fila_name)
+
+
+        status='SUCCESS'
+        reason='SUCCESS'
+        
         # file is in local map and present in the folder 
-        if (file_uuid in self.data_store_map.keys()) and self.data_store_map[file_uuid]:
-            status='SUCCESS'
-            reason='SUCCESS'
-            filename=self.data_store_map[file_uuid][0]
+        if  file_path.exists() == True:
             # try:
-            file_path = self.folder.joinpath(filename)
             os.remove(file_path.resolve())
             self.data_store_map[file_uuid]=tuple((None, ctime(os.path.getctime(file_path.resolve()))))
             # except:
             #     status='FAIL'
             #     reason='FAILED TO DELETE'
             return message.Response(response=status, reason=reason)
-        
-        return message.Response()
-        
+        else:
+            status = 'FAIL'
+            reason = 'FILE ALREADY DELETED'
+            return message.Response(response=status, reason=reason)
 
     # this is handing local write
     def BroadcastWrite(self, request, context):
@@ -169,9 +191,10 @@ class Replica(servicer.ReplicaServicer):
         if response.status==0:
             total_ack_received+=1
 
-        print("Voila, Now I will broadcast")
+    
         # here is the loop
         for _rep in self.replicas:
+            print(f"BROADCASTING UPDATE TO [{_rep.address}]")
             stub = servicer.ReplicaStub(grpc.insecure_channel(_rep.address))
             reply = stub.LocalWrite(message.WriteRequest(name=request.name, uuid = request.uuid, content=request.content))
             # print(reply.status) # remove later
@@ -187,15 +210,42 @@ class Replica(servicer.ReplicaServicer):
 
     # here all the local writes are handled 
     # check all the conditions for write
-    def LocalWrite(self, request, context):
+    def LocalWrite(self, request:message.WriteRequest, context):
         file_path = self.folder.joinpath(f"{request.name}.txt")
-        with open(file_path.resolve(), "w") as f:
+        file_uuid = request.uuid
+
+        uuids = self.data_store_map.keys()
+        #New File
+        if file_uuid not in uuids and file_path.exists() == False:
+            with open(file_path.resolve(), "w") as f:
                 f.write(request.content)
                 f.close()
-                print(file_path.name)
-                self.data_store_map[request.uuid] = tuple((file_path.name, ctime(os.path.getctime(file_path.resolve()))))
-        status = "SUCCESS"
-        return message.WriteResponse(status=status, uuid=request.uuid, version=self.data_store_map[request.uuid][1])
+                self.data_store_map[file_uuid] = tuple((file_path.name, ctime(os.path.getctime(file_path.resolve()))))
+            status  = "SUCCESS"
+            version = self.data_store_map[file_uuid][1]
+           
+            return message.WriteResponse(status=status, uuid=file_uuid, version=version, message = None)
+        
+        elif file_uuid not in uuids and file_path.exists() == True:
+            status = "FAIL"
+            status_message = "FILE WITH THE SAME NAME ALREADY EXISTS"
+            print(status_message)
+            return message.WriteResponse(status=status, uuid=None, version=None, message = status_message)
+        elif file_uuid in uuids and file_path.exists() == True:
+            with open(file_path.resolve(), "a") as f:
+                f.write(request.content)
+                f.close()
+                self.data_store_map[file_uuid]  = tuple((file_path.name), ctime(os.path.getctime(file_path.resolve())))
+            status = "SUCCESS"
+            version = self.data_store_map[file_uuid][1]
+            status_message = "File updated successfully"
+            return message.WriteResponse(status=status, uuid=file_uuid, version=version, message = status_message)
+        elif file_uuid in uuids and file_path.exists() == False:
+            status = 'FAIL'
+            status_message = "DELETED FILE CANNOT BE UPDATED"
+            version = self.data_store_map[file_uuid][1]
+            return message.WriteResponse(status=status, uuid=file_uuid, version=version, message = status_message)
+
 
     def NotifyPrimary(self, request, context):
         self.replicas_lock.acquire()

@@ -42,14 +42,12 @@ class Client:
         request = message.ReadDeleteRequest(uuid=file_uuid)
         response = replica_stub.Read(request)
         print(response)
-        pass
 
     def delete(self, file_uuid, replica:message.ServerMessage):
         replica_stub = servicer.ReplicaStub(channel = grpc.insecure_channel(replica.address) )
         request = message.ReadDeleteRequest(uuid=file_uuid)
         response = replica_stub.Delete(request)
         print(response)
-        pass
 
 
 def show_menu(client:Client):

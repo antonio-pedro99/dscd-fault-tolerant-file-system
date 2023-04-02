@@ -30,16 +30,18 @@ class ReadDeleteRequest(_message.Message):
     def __init__(self, uuid: _Optional[str] = ...) -> None: ...
 
 class ReadResponse(_message.Message):
-    __slots__ = ["content", "name", "status", "version"]
+    __slots__ = ["content", "details", "name", "status", "version"]
     CONTENT_FIELD_NUMBER: _ClassVar[int]
+    DETAILS_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     VERSION_FIELD_NUMBER: _ClassVar[int]
     content: str
+    details: str
     name: str
     status: Status
     version: str
-    def __init__(self, status: _Optional[_Union[Status, str]] = ..., name: _Optional[str] = ..., content: _Optional[str] = ..., version: _Optional[str] = ...) -> None: ...
+    def __init__(self, status: _Optional[_Union[Status, str]] = ..., name: _Optional[str] = ..., content: _Optional[str] = ..., version: _Optional[str] = ..., details: _Optional[str] = ...) -> None: ...
 
 class Response(_message.Message):
     __slots__ = ["reason", "response"]
@@ -74,14 +76,16 @@ class WriteRequest(_message.Message):
     def __init__(self, name: _Optional[str] = ..., content: _Optional[str] = ..., uuid: _Optional[str] = ...) -> None: ...
 
 class WriteResponse(_message.Message):
-    __slots__ = ["status", "uuid", "version"]
+    __slots__ = ["message", "status", "uuid", "version"]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     UUID_FIELD_NUMBER: _ClassVar[int]
     VERSION_FIELD_NUMBER: _ClassVar[int]
+    message: str
     status: Status
     uuid: str
     version: str
-    def __init__(self, status: _Optional[_Union[Status, str]] = ..., uuid: _Optional[str] = ..., version: _Optional[str] = ...) -> None: ...
+    def __init__(self, status: _Optional[_Union[Status, str]] = ..., uuid: _Optional[str] = ..., version: _Optional[str] = ..., message: _Optional[str] = ...) -> None: ...
 
 class Status(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = []
