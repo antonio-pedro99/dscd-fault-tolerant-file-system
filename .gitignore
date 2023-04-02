@@ -1,4 +1,5 @@
 /env
+.venv
 /script
 /primary_backup_blocking/app/db/
 /primary_backup_blocking/__pycache__/
