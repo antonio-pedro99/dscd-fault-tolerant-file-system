@@ -171,8 +171,6 @@ class Replica(servicer.ReplicaServicer):
         
         # file is in local map and present in the folder 
         if  file_path.exists() == True:
-            # try:
-            # os.remove(file_path.resolve())
             
             print(f'Removing {file_path.resolve()}')
             try:
@@ -244,7 +242,7 @@ class Replica(servicer.ReplicaServicer):
             with open(file_path.resolve(), "a") as f:
                 f.write(request.content)
                 f.close()
-                self.data_store_map[file_uuid]  = tuple((file_path.name), ctime(os.path.getctime(file_path.resolve())))
+                self.data_store_map[file_uuid]  = ((file_path.name), ctime(os.path.getctime(file_path.resolve())))
             status = "SUCCESS"
             version = self.data_store_map[file_uuid][1]
             status_message = "File updated successfully"

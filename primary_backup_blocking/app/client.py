@@ -24,13 +24,11 @@ class Client:
         except Exception as e:
             return e
     
-    def write(self, replica:message.ServerMessage, name=None, content=None ):
+    def write(self, replica:message.ServerMessage, name=None, content=None , file_uuid=None):
         
         replica_stub = servicer.ReplicaStub(channel = grpc.insecure_channel(replica.address) )
-        file_uuid = str(uuid.uuid4())
-        if name==None and content==None:
-            name = input("Enter the file name: ")
-            content = input("Enter the file content: ")
+        if file_uuid == None:
+            file_uuid = str(uuid.uuid4())
         request = message.WriteRequest(name=name, uuid=file_uuid, content=content)
         response = replica_stub.Write(request)
         print(response)
@@ -60,7 +58,13 @@ def show_menu(client:Client):
         try:
             choice=int(input('Choose one option: '))
             if(choice==1):
-                client.write(replica=replica, name='antonio',content='Hello bro')
+                file_uuid = input("Enter the UUID[Optional]: ")
+                name = input("Enter the file name: ")
+                content = input("Enter the file content: ")
+                if file_uuid != "":
+                    client.write(replica=replica, name = name, content = content, file_uuid = file_uuid)
+                else:
+                    client.write(replica=replica, name = name, content = content)
             elif(choice==2):
                 file_uuid=input("Enter the uuid of file: ")
                 client.read(file_uuid = file_uuid, replica=replica)
