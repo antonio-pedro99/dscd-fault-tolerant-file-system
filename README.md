@@ -1,4 +1,4 @@
-# fault-tolerant-file-system
+# Fault Tolerant File-system
 
 
 ## Steps to run the experiment
